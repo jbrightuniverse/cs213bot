@@ -298,7 +298,7 @@ class Main(commands.Cog):
 
     @commands.command()
     async def dm(self, ctx):
-         """
+        """
         `!dm` __`221DM Generator`__
 
         **Usage:** !dm <user | close> [user] [...]
