@@ -21,11 +21,11 @@ CANVAS_COLOR = 0xe13f2b
 CANVAS_THUMBNAIL_URL = "https://lh3.googleusercontent.com/2_M-EEPXb2xTMQSTZpSUefHR3TjgOCsawM3pjVG47jI-BrHoXGhKBpdEHeLElT95060B=s180"
 
 load_dotenv()
-CS221BOT_KEY = os.getenv("CS221BOT_KEY")
+CS213BOT_KEY = os.getenv("CS213BOT_KEY")
 
 bot = commands.Bot(command_prefix="!", help_command=None, intents=discord.Intents.all())
 
-parser = argparse.ArgumentParser(description="Run CS221Bot")
+parser = argparse.ArgumentParser(description="Run CS213Bot")
 parser.add_argument("--cnu", dest="notify_unpublished", action="store_true",
                     help="Allow the bot to send notifications about unpublished Canvas modules (if you have access) as well as published ones.")
 args = parser.parse_args()
@@ -97,7 +97,7 @@ async def wipe_dms():
         await asyncio.sleep(300)
         now = datetime.utcnow()
 
-        for channel in filter(lambda c: c.name.startswith("221dm-"), guild.channels):
+        for channel in filter(lambda c: c.name.startswith("213dm-"), guild.channels):
             if msg := next(channel.history(limit=1), None):
                 if (now - msg.created_at).total_seconds() >= 86400:
                     await channel.delete()
@@ -210,4 +210,4 @@ async def on_command_error(ctx, error):
             print(("```" + "".join(traceback.format_exception(etype, error, trace, 999)) + "```").replace("C:\\Users\\William\\anaconda3\\lib\\site-packages\\", "").replace("D:\\my file of stuff\\discordbot\\", ""))
 
 
-bot.run(CS221BOT_KEY)
+bot.run(CS213BOT_KEY)
