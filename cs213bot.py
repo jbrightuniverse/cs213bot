@@ -10,10 +10,12 @@ from os.path import isfile, join
 
 import discord
 from discord.ext import commands
+from dotenv import load_dotenv
 
 from util.badargs import BadArgs
 from util.create_file import create_file_if_not_exists
 
+load_dotenv()
 CS213BOT_KEY = os.getenv("CS213BOT_KEY")
 
 bot = commands.Bot(command_prefix="!", help_command=None, intents=discord.Intents.all())
