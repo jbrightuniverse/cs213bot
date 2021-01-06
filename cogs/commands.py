@@ -18,8 +18,6 @@ from discord.ext import commands
 from googletrans import constants, Translator
 
 from util.badargs import BadArgs
-from util.discord_handler import DiscordHandler
-
 
 # This is a huge hack but it technically works
 def _urlencode(*args, **kwargs):
@@ -37,7 +35,6 @@ class Commands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.add_instructor_role_counter = 0
-        self.bot.d_handler = DiscordHandler()
 
     @commands.command()
     @commands.cooldown(1, 5, commands.BucketType.user)
@@ -244,39 +241,39 @@ class Commands(commands.Cog):
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def dm(self, ctx):
         """
-        `!dm` __`221DM Generator`__
+        `!dm` __`213DM Generator`__
 
         **Usage:** !dm <user | close> [user] [...]
 
         **Examples:**
-        `!dm @blankuser#1234` creates 221DM with TAs and blankuser
-        `!dm @blankuser#1234 @otheruser#5678` creates 221DM with TAs, blankuser and otheruser
-        `!dm close` closes 221DM
+        `!dm @blankuser#1234` creates 213DM with TAs and blankuser
+        `!dm @blankuser#1234 @otheruser#5678` creates 213DM with TAs, blankuser and otheruser
+        `!dm close` closes 213DM
         """
 
-        # meant for 221 server
-        guild = self.bot.get_guild(745503628479037492)
+        # meant for 213 server
+        guild = self.bot.get_guild(796222302483251241)
 
         if "close" in ctx.message.content.lower():
-            if not ctx.channel.name.startswith("221dm-"):
-                raise BadArgs("This is not a 221DM.")
+            if not ctx.channel.name.startswith("213dm-"):
+                raise BadArgs("This is not a 213DM.")
 
-            await ctx.send("Closing 221DM.")
+            await ctx.send("Closing 213DM.")
             await next(i for i in guild.roles if i.name == ctx.channel.name).delete()
             return await ctx.channel.delete()
 
         if not ctx.message.mentions:
             raise BadArgs("You need to specify a user or users to add!", show_help=True)
 
-        # check that nobody is already in a 221dm before going and creating everything
+        # check that nobody is already in a 213dm before going and creating everything
         for user in ctx.message.mentions:
             for role in user.roles:
-                if role.name.startswith("221dm"):
-                    raise BadArgs(f"{user.name} is already in a 221DM.")
+                if role.name.startswith("213dm"):
+                    raise BadArgs(f"{user.name} is already in a 213DM.")
 
         # generate customized channel name to allow customized role
         nam = int(str((datetime.now() - datetime(1970, 1, 1)).total_seconds()).replace(".", "")) + ctx.author.id
-        nam = f"221dm-{nam}"
+        nam = f"213dm-{nam}"
         # create custom role
         role = await guild.create_role(name=nam, colour=discord.Colour(0x2f3136))
 
@@ -289,17 +286,17 @@ class Commands(commands.Cog):
         access = discord.PermissionOverwrite(read_messages=True, send_messages=True, read_message_history=True)
         noaccess = discord.PermissionOverwrite(read_messages=False, read_message_history=False, send_messages=False)
         overwrites = {
-            # allow Computers and the new role, deny everyone else including Fake TA
+            # allow Computers and the new role, deny everyone else
             guild.default_role                : noaccess,
-            guild.get_role(748035942945914920): access,
+            guild.get_role(796222302697816121): access,
             role                              : access
         }
         # this id is id of group dm category
-        channel = await guild.create_text_channel(nam, overwrites=overwrites, category=guild.get_channel(764672304793255986))
+        channel = await guild.create_text_channel(nam, overwrites=overwrites, category=guild.get_channel(796505656437768233))
         await ctx.send("Opened channel.")
         users = (f"<@{usr.id}>" for usr in ctx.message.mentions)
         await channel.send(f"<@{ctx.author.id}> {' '.join(users)}\n" +
-                           f"Welcome to 221 private DM. Type `!dm close` to exit when you are finished.")
+                           f"Welcome to 213 private DM. Type `!dm close` to exit when you are finished.")
 
     @commands.command()
     @commands.cooldown(1, 5, commands.BucketType.user)
@@ -372,10 +369,10 @@ class Commands(commands.Cog):
         **Usage:** !join [role name]
 
         **Examples:**
-        `!join L1A` adds the L1A role to yourself
+        `!join L2A` adds the L2A role to yourself
 
         **Valid Roles:**
-        Looking for Partners, Study Group, L1A, L1B, L1C, L1D, L1E, L1F, L1G, L1H, L1J, L1K, L1N, L1P, L1R, L1S, L1T, He/Him/His, She/Her/Hers, They/Them/Theirs, Ze/Zir/Zirs, notify
+        L2A, L2B, L2C, L2D, L2E, L2F, L2G, L2H, L2J, L2K, L2L, L2M, L2N, L2P, LQ2, L2R, L2S, He/Him/His, She/Her/Hers, They/Them/Theirs, Ze/Zir/Zirs
         """
 
         # case where role name is space separated
@@ -386,7 +383,7 @@ class Commands(commands.Cog):
             raise BadArgs("", show_help=True)
 
         # make sure that you can't add roles like "prof" or "ta"
-        valid_roles = ["Looking for Partners", "Study Group", "L1A", "L1B", "L1C", "L1D", "L1E", "L1F", "L1G", "L1H", "L1J", "L1K", "L1N", "L1P", "L1R", "L1S", "L1T", "He/Him/His", "She/Her/Hers", "They/Them/Theirs", "Ze/Zir/Zirs", "notify"]
+        valid_roles = ["L2A", "L2B", "L2C", "L2D", "L2E", "L2F", "L2G", "L2H", "L2J", "L2K", "L2L", "L2M", "L2N", "L2P", "L2Q", "L2R", "L2S", "He/Him/His", "She/Her/Hers", "They/Them/Theirs", "Ze/Zir/Zirs"]
         aliases = {"he": "He/Him/His", "she": "She/Her/Hers", "ze": "Ze/Zir/Zirs", "they": "They/Them/Theirs"}
 
         # Convert alias to proper name
@@ -394,7 +391,7 @@ class Commands(commands.Cog):
             name = aliases[name].lower()
 
         # Ensure that people only add one lab role
-        if name.startswith("l1") and any(role.name.startswith("L1") for role in ctx.author.roles):
+        if name.startswith("l2") and any(role.name.startswith("L2") for role in ctx.author.roles):
             raise BadArgs("You already have a lab role!")
 
         # Grab the role that the user selected
@@ -478,7 +475,7 @@ class Commands(commands.Cog):
         **Usage:** !leave [role name]
 
         **Examples:**
-        `!leave L1A` removes the L1A role from yourself
+        `!leave L2A` removes the L2A role from yourself
         """
 
         # case where role name is space separated
@@ -613,7 +610,7 @@ class Commands(commands.Cog):
     async def shut(self, ctx):
         change = ""
 
-        for role in self.bot.get_guild(745503628479037492).roles[:-6]:
+        for role in self.bot.get_guild(796222302483251241).roles[:-6]:
             if role.permissions.value == 104187456:
                 change = "enabled messaging permissions"
                 await role.edit(permissions=discord.Permissions(permissions=104189504))
@@ -631,7 +628,7 @@ class Commands(commands.Cog):
 
         **Usage:** !userstats <USER ID>
 
-        **Examples:** `!userstats 226878658013298690` [embed]
+        **Examples:** `!userstats 375445489627299851` [embed]
         """
 
         if not userid:
