@@ -10,6 +10,10 @@ Clone the repo to your computer, and ensure your Discord Bot [Token](https://dis
 
 The bot requires the following pip packages: 
 - `discord` 
+- `googletrans`
+- `pytz`
+- `requests`
+- `webcolors`
 
 You can install all of them using `pip install -r requirements.txt`.
 
