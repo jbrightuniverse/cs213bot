@@ -31,7 +31,7 @@ class Meta(commands.Cog):
         """
 
         if not arg:
-            embed = discord.Embed(title="CS221 Bot", description="Commands:", colour=random.randint(0, 0xFFFFFF), timestamp=datetime.utcnow())
+            embed = discord.Embed(title="CS213 Bot", description="Commands:", colour=random.randint(0, 0xFFFFFF), timestamp=datetime.utcnow())
             embed.add_field(name=f"❗ Current Prefix: `{self.bot.command_prefix}`", value="\u200b", inline=False)
 
             for k, v in self.bot.cogs.items():
