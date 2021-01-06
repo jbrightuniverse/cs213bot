@@ -10,17 +10,10 @@ from os.path import isfile, join
 
 import discord
 from discord.ext import commands
-from dotenv import load_dotenv
 
-from cogs.canvas import Canvas
-from cogs.piazza import Piazza
 from util.badargs import BadArgs
 from util.create_file import create_file_if_not_exists
 
-CANVAS_COLOR = 0xe13f2b
-CANVAS_THUMBNAIL_URL = "https://lh3.googleusercontent.com/2_M-EEPXb2xTMQSTZpSUefHR3TjgOCsawM3pjVG47jI-BrHoXGhKBpdEHeLElT95060B=s180"
-
-load_dotenv()
 CS213BOT_KEY = os.getenv("CS213BOT_KEY")
 
 bot = commands.Bot(command_prefix="!", help_command=None, intents=discord.Intents.all())
@@ -48,11 +41,10 @@ async def status_task():
         online_members = {member for guild in bot.guilds for member in guild.members if not member.bot and member.status != discord.Status.offline}
 
         play = ["with the \"help\" command", " ", "with your mind", "ƃuᴉʎɐlԀ", "...something?",
-                "a game? Or am I?", "¯\_(ツ)_/¯", f"with {len(online_members)} people", "with image manipulation"]
-        listen = ["smart music", "... wait I can't hear anything",
-                  "rush 🅱", "C++ short course"]v
+                "a game? Or am I?", "¯\_(ツ)_/¯", f"with {len(online_members)} people", "with the Simple Machine"]
+        listen = ["smart music", "... wait I can't hear anything"]
         watch = ["TV", "YouTube vids", "over you",
-                 "how to make a bot", "C++ tutorials", "I, Robot"]
+                 "how to make a bot", "C tutorials", "sm213 execute", "I, Robot"]
 
         rng = random.randrange(0, 3)
 
@@ -67,7 +59,7 @@ async def status_task():
 
 
 def startup():
-    files = ("data/poll.json", "data/canvas.json", "data/piazza.json")
+    files = ("data/poll.json")
 
     for f in files:
         if not isfile(f):
@@ -75,8 +67,6 @@ def startup():
             bot.writeJSON({}, f)
 
     bot.poll_dict = bot.loadJSON("data/poll.json")
-    bot.canvas_dict = bot.loadJSON("data/canvas.json")
-    bot.piazza_dict = bot.loadJSON("data/piazza.json")
 
     for channel in filter(lambda ch: not bot.get_channel(int(ch)), list(bot.poll_dict)):
         del bot.poll_dict[channel]
@@ -86,12 +76,8 @@ def startup():
 
     bot.writeJSON(bot.poll_dict, "data/poll.json")
 
-    Canvas.canvas_init(bot.get_cog("Canvas"))
-    Piazza.piazza_start(bot.get_cog("Piazza"))
-
-
 async def wipe_dms():
-    guild = bot.get_guild(745503628479037492)
+    guild = bot.get_guild(796222302483251241)
 
     while True:
         await asyncio.sleep(300)
@@ -111,12 +97,6 @@ async def on_ready():
     print("Logged in successfully")
     bot.loop.create_task(status_task())
     bot.loop.create_task(wipe_dms())
-    bot.loop.create_task(Piazza.track_inotes(bot.get_cog("Piazza")))
-    bot.loop.create_task(Piazza.send_pupdate(bot.get_cog("Piazza")))
-    bot.loop.create_task(Canvas.stream_tracking(bot.get_cog("Canvas")))
-    bot.loop.create_task(Canvas.assignment_reminder(bot.get_cog("Canvas")))
-    bot.loop.create_task(bot.get_cog("Canvas").update_modules_hourly())
-
 
 @bot.event
 async def on_guild_join(guild):
