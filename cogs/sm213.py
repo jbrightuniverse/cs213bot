@@ -13,7 +13,7 @@ class Sm213(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @bot.command()
+    @commands.command()
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def sim(self, ctx):
         """
