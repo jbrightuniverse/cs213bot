@@ -421,7 +421,7 @@ class Commands(commands.Cog):
                 raise BadArgs("you cannot add an instructor/invalid role!", show_help=True)
 
         await ctx.author.add_roles(role)
-        await ctx.send("role added!", delte_after=5)
+        await ctx.send("role added!", delete_after=5)
 
     @commands.command()
     @commands.cooldown(1, 10, commands.BucketType.user)
@@ -605,7 +605,7 @@ class Commands(commands.Cog):
         self.bot.writeJSON(self.bot.poll_dict, "data/poll.json")
 
     @commands.command(hidden=True)
-    @commands.has_permissions(administrator=True)
+    @commands.is_owner()
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def shut(self, ctx):
         change = ""

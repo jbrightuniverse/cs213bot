@@ -21,8 +21,6 @@ CS213BOT_KEY = os.getenv("CS213BOT_KEY")
 bot = commands.Bot(command_prefix="!", help_command=None, intents=discord.Intents.all())
 
 parser = argparse.ArgumentParser(description="Run CS213Bot")
-parser.add_argument("--cnu", dest="notify_unpublished", action="store_true",
-                    help="Allow the bot to send notifications about unpublished Canvas modules (if you have access) as well as published ones.")
 args = parser.parse_args()
 
 
@@ -61,7 +59,7 @@ async def status_task():
 
 
 def startup():
-    files = ("data/poll.json")
+    files = ["data/poll.json"]
 
     for f in files:
         if not isfile(f):
@@ -156,12 +154,6 @@ async def on_message(message):
 if __name__ == "__main__":
     bot.loadJSON = loadJSON
     bot.writeJSON = writeJSON
-
-    # True if the bot should send notifications about new *unpublished* modules on Canvas; False otherwise.
-    # This only matters if the host of the bot has access to unpublished modules. If the host does
-    # not have access, then the bot won't know about any unpublished modules and won't send any info
-    # about them anyway.
-    bot.notify_unpublished = args.notify_unpublished
 
     for extension in filter(lambda f: isfile(join("cogs", f)) and f != "__init__.py", os.listdir("cogs")):
         bot.load_extension(f"cogs.{extension[:-3]}")
