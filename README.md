@@ -26,3 +26,5 @@ View the list of commands by typing `!help` in a server where the bot is in.
 ## Credits
 
 CS213Bot is forked from and based on CS221Bot. Check out their [repo](https://github.com/Person314159/cs221bot) and support their development.
+
+The sm213 language was created by Dr. Mike Feeley of the CPSC department at UBCV. Used with permission.

@@ -372,7 +372,7 @@ class Commands(commands.Cog):
         `!join L2A` adds the L2A role to yourself
 
         **Valid Roles:**
-        L2A, L2B, L2C, L2D, L2E, L2F, L2G, L2H, L2J, L2K, L2L, L2M, L2N, L2P, LQ2, L2R, L2S, He/Him/His, She/Her/Hers, They/Them/Theirs, Ze/Zir/Zirs
+        L2A, L2B, L2C, L2D, L2E, L2F, L2G, L2H, L2J, L2K, L2L, L2M, L2N, L2P, L2Q, L2R, L2S, He/Him/His, She/Her/Hers, They/Them/Theirs, Ze/Zir/Zirs
         """
 
         # case where role name is space separated

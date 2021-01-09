@@ -39,7 +39,7 @@ class Meta(commands.Cog):
 
             embed.set_thumbnail(url=self.bot.user.avatar_url)
             embed.add_field(name = "_ _\nSupport Bot Development: visit the CS213Bot repo at https://github.com/jbrightuniverse/cs213bot/", value = "_ _\nCS213Bot is based on CS221Bot. Support them at https://github.com/Person314159/cs221bot/")
-            embed.set_footer(text=f"Requested by {ctx.author.display_name}", icon_url=str(ctx.author.avatar_url))
+            embed.set_footer(text=f"The sm213 language was created by Dr. Mike Feeley of the CPSC department at UBCV.\nUsed with permission.\n\nRequested by {ctx.author.display_name}", icon_url=str(ctx.author.avatar_url))
             await ctx.send(embed=embed)
         else:
             help_command = arg[0]

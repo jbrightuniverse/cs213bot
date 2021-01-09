@@ -22,6 +22,11 @@ class SM213(commands.Cog):
         **Usage:** !sim
 
         **Examples:** `!sim` launches simulator
+
+        The sm213 language was created by Dr. Mike Feeley of the CPSC department at UBCV. 
+        Used with permission.
+
+        Run the command and type `help` for more detailed specs.
         """
 
         MEMORY_SIZE = 100000
@@ -40,7 +45,7 @@ class SM213(commands.Cog):
             "insOpExt": 0
         }
 
-        await mbed(ctx, "Discord Simple Machine 213", "Type `help` for a commands list.")
+        await mbed(ctx, "Discord Simple Machine 213", "~~Type `help` for a commands list.~~ help coming soon")
 
         def reg(r):
             return int(r[1:])
@@ -54,343 +59,379 @@ class SM213(commands.Cog):
 
             if message.content == "": continue
 
-            command = message.content.lstrip().split("#")[0].lower().split()
-            instruction = command[0]
-            data = "".join(command[1:])
-            operands = data.split(",")
+            cmd = message.content.lower()
+            commands = cmd.split("\n")
 
-            try:
+            bytecodes = []
+            cmdxs = []
+            new = False
 
-                if instruction == "ld":
-                    if operands[0].startswith("$"):
-                        # load immediate
-                        number = operands[0][1:]
-                        value = int(number, base = [10, 16][number.startswith("0x")])
-                        registers[reg(operands[1])] = value
+            for cmdx in commands:
+                command = cmdx.lstrip().split("#")[0].split()
+                if len(command) == 0: continue
+                
+                instruction = command[0]
+                data = "".join(command[1:])
+                operands = data.split(",")
 
-                        special["insOpCode"] = 0
-                        special["insOp0"] = reg(operands[1])
+                try:
+
+                    if instruction == "ld":
+                        if operands[0].startswith("$"):
+                            # load immediate
+                            number = operands[0][1:]
+                            value = int(number, base = [10, 16][number.startswith("0x")])
+                            registers[reg(operands[1])] = value
+
+                            special["insOpCode"] = 0
+                            special["insOp0"] = reg(operands[1])
+                            special["insOp1"] = 0
+                            special["insOp2"] = 0
+                            special["insOpImm"] = 0
+                            special["insOpExt"] = value
+                            pcpush = 6
+                        
+                        elif len(operands) == 2 and "(" in operands[0] and ")" in operands[0]:
+                            # load base + distance
+                            basedata = operands[0].split("(") # find first bracket
+                            if basedata[0] == "": 
+                                offset = 0
+                            else:
+                                offset = int(basedata[0])
+                            pos = registers[reg(basedata[1][:-1])] # remove second bracket
+                            registers[reg(operands[1])] = int.from_bytes(memory[pos + offset : pos + offset + 4], "big")
+
+                            special["insOpCode"] = 1
+                            special["insOp0"] = offset//4
+                            special["insOp1"] = reg(basedata[1][:-1])
+                            special["insOp2"] = reg(operands[1])
+                            special["insOpImm"] = 0
+                            special["insOpExt"] = 0
+                            pcpush = 2
+
+                        elif len(operands) == 4 and operands[0][0] == "(" and operands[2][-1] == ")":
+                            # load indexed
+                            base = registers[reg(operands[0][1:])]
+                            offset = registers[reg(operands[1])]
+                            multiplier = int(operands[2][:-1])
+                            registers[reg(operands[3])] = int.from_bytes(memory[base + offset * multiplier : base + offset * multiplier + 4], "big")
+
+                            special["insOpCode"] = 2
+                            special["insOp0"] = reg(operands[0][1:])
+                            special["insOp1"] = reg(operands[1])
+                            special["insOp2"] = reg(operands[3])
+                            special["insOpImm"] = 4
+                            special["insOpExt"] = 0
+                            pcpush = 2
+
+                        else: continue
+
+                    elif instruction == "st":
+                        if len(operands) == 2 and "(" in operands[1] and ")" in operands[1]:
+                            # store base + distance
+                            basedata = operands[1].split("(")
+                            if basedata[0] == "": 
+                                offset = 0
+                            else:
+                                offset = int(basedata[0])
+                            pos = registers[reg(basedata[1][:-1])]
+                            memory[pos + offset : pos + offset + 4] = list(int(registers[reg(operands[0])]).to_bytes(4, "big"))
+
+                            special["insOpCode"] = 3
+                            special["insOp0"] = reg(operands[0])
+                            special["insOp1"] = offset//4
+                            special["insOp2"] = reg(basedata[1][:-1])
+                            special["insOpImm"] = 0
+                            special["insOpExt"] = 0
+                            pcpush = 2
+
+                        elif len(operands) == 4 and operands[1][0] == "(" and operands[3][-1] == ")":
+                            # store indexed
+                            base = registers[reg(operands[1][1:])]
+                            offset = registers[reg(operands[2])]
+                            multiplier = int(operands[3][:-1])
+                            memory[base + offset * multiplier : base + offset * multiplier + 4] = list(int(registers[reg(operands[0])]).to_bytes(4, "big"))
+
+                            special["insOpCode"] = 4
+                            special["insOp0"] = reg(operands[0])
+                            special["insOp1"] = reg(operands[1][1:])
+                            special["insOp2"] = reg(operands[2])
+                            special["insOpImm"] = 4
+                            special["insOpExt"] = 0
+                            pcpush = 2
+
+                        else: continue
+
+                    elif instruction == "halt":
+                        special["PC"] += 2
+                        special["insOpCode"] = 2
+                        special["insOp0"] = 0
                         special["insOp1"] = 0
                         special["insOp2"] = 0
                         special["insOpImm"] = 0
-                        special["insOpExt"] = value
-                        pcpush = 6
-                    
-                    elif len(operands) == 2 and "(" in operands[0] and ")" in operands[0]:
-                        # load base + distance
-                        basedata = operands[0].split("(") # find first bracket
-                        if basedata[0] == "": 
-                            offset = 0
-                        else:
-                            offset = int(basedata[0])
-                        pos = registers[reg(basedata[1][:-1])] # remove second bracket
-                        registers[reg(operands[1])] = int.from_bytes(memory[pos + offset : pos + offset + 4], "big")
-
-                        special["insOpCode"] = 1
-                        special["insOp0"] = offset//4
-                        special["insOp1"] = reg(basedata[1][:-1])
-                        special["insOp2"] = reg(operands[1])
-                        special["insOpImm"] = 0
                         special["insOpExt"] = 0
                         pcpush = 2
+                        return await ctx.send("HALT issued. Stopping execution and closing simulator. In a future release, this will not exit the simulator.")
 
-                    elif len(operands) == 4 and operands[0][0] == "(" and operands[2][-1] == ")":
-                        # load indexed
-                        base = registers[reg(operands[0][1:])]
-                        offset = registers[reg(operands[1])]
-                        multiplier = int(operands[2][:-1])
-                        registers[reg(operands[3])] = int.from_bytes(memory[base + offset * multiplier : base + offset * multiplier + 4], "big")
+                    elif instruction == "nop":
+                        pass
 
-                        special["insOpCode"] = 2
-                        special["insOp0"] = reg(operands[0][1:])
-                        special["insOp1"] = reg(operands[1])
-                        special["insOp2"] = reg(operands[3])
-                        special["insOpImm"] = 4
-                        special["insOpExt"] = 0
-                        pcpush = 2
+                    elif instruction == "mov":
+                        if len(operands) == 2:
+                            registers[reg(operands[1])] = registers[reg(operands[0])]
 
-                    else: continue
+                            special["insOpCode"] = 6
+                            special["insOp0"] = 0
+                            special["insOp1"] = reg(operands[0])
+                            special["insOp2"] = reg(operands[1])
+                            special["insOpImm"] = 0
+                            special["insOpExt"] = 0
+                            pcpush = 2
 
-                elif instruction == "st":
-                    if len(operands) == 2 and "(" in operands[1] and ")" in operands[1]:
-                        # store base + distance
-                        basedata = operands[1].split("(")
-                        if basedata[0] == "": 
-                            offset = 0
-                        else:
-                            offset = int(basedata[0])
-                        pos = registers[reg(basedata[1][:-1])]
-                        memory[pos + offset : pos + offset + 4] = list(int(registers[reg(operands[0])]).to_bytes(4, "big"))
+                        else: continue
 
-                        special["insOpCode"] = 3
-                        special["insOp0"] = reg(operands[0])
-                        special["insOp1"] = offset//4
-                        special["insOp2"] = reg(basedata[1][:-1])
-                        special["insOpImm"] = 0
-                        special["insOpExt"] = 0
-                        pcpush = 2
+                    elif instruction == "add":
+                        if len(operands) == 2:
+                            registers[reg(operands[1])] += registers[reg(operands[0])]
 
-                    elif len(operands) == 4 and operands[1][0] == "(" and operands[3][-1] == ")":
-                        # store indexed
-                        base = registers[reg(operands[1][1:])]
-                        offset = registers[reg(operands[2])]
-                        multiplier = int(operands[3][:-1])
-                        memory[base + offset * multiplier : base + offset * multiplier + 4] = list(int(registers[reg(operands[0])]).to_bytes(4, "big"))
+                            special["insOpCode"] = 6
+                            special["insOp0"] = 1
+                            special["insOp1"] = reg(operands[0])
+                            special["insOp2"] = reg(operands[1])
+                            special["insOpImm"] = 0
+                            special["insOpExt"] = 0
+                            pcpush = 2
 
-                        special["insOpCode"] = 4
-                        special["insOp0"] = reg(operands[0])
-                        special["insOp1"] = reg(operands[1][1:])
-                        special["insOp2"] = reg(operands[2])
-                        special["insOpImm"] = 4
-                        special["insOpExt"] = 0
-                        pcpush = 2
+                        else: continue
 
-                    else: continue
+                    elif instruction == "and":
+                        if len(operands) == 2:
+                            registers[reg(operands[1])] &= registers[reg(operands[0])]
 
-                elif instruction == "halt":
-                    special["PC"] += 2
-                    special["insOpCode"] = 2
-                    special["insOp0"] = 0
-                    special["insOp1"] = 0
-                    special["insOp2"] = 0
-                    special["insOpImm"] = 0
-                    special["insOpExt"] = 0
-                    pcpush = 2
-                    return await ctx.send("HALT issued. Stopping execution and closing simulator. In a future release, this will not exit the simulator.")
+                            special["insOpCode"] = 6
+                            special["insOp0"] = 2
+                            special["insOp1"] = reg(operands[0])
+                            special["insOp2"] = reg(operands[1])
+                            special["insOpImm"] = 0
+                            special["insOpExt"] = 0
+                            pcpush = 2
 
-                elif instruction == "nop":
-                    pass
+                        else: continue
 
-                elif instruction == "mov":
-                    if len(operands) == 2:
-                        registers[reg(operands[1])] = registers[reg(operands[0])]
+                    elif instruction == "inc":
+                        if len(operands) == 1:
+                            registers[reg(operands[0])] += 1
 
-                        special["insOpCode"] = 6
-                        special["insOp0"] = 0
-                        special["insOp1"] = reg(operands[0])
-                        special["insOp2"] = reg(operands[1])
-                        special["insOpImm"] = 0
-                        special["insOpExt"] = 0
-                        pcpush = 2
+                            special["insOpCode"] = 6
+                            special["insOp0"] = 3
+                            special["insOp1"] = 0
+                            special["insOp2"] = reg(operands[0])
+                            special["insOpImm"] = 0
+                            special["insOpExt"] = 0
+                            pcpush = 2
 
-                    else: continue
+                        else: continue
 
-                elif instruction == "add":
-                    if len(operands) == 2:
-                        registers[reg(operands[1])] += registers[reg(operands[0])]
+                    elif instruction == "inca":
+                        if len(operands) == 1:
+                            registers[reg(operands[0])] += 4
 
-                        special["insOpCode"] = 6
-                        special["insOp0"] = 1
-                        special["insOp1"] = reg(operands[0])
-                        special["insOp2"] = reg(operands[1])
-                        special["insOpImm"] = 0
-                        special["insOpExt"] = 0
-                        pcpush = 2
+                            special["insOpCode"] = 6
+                            special["insOp0"] = 4
+                            special["insOp1"] = 0
+                            special["insOp2"] = reg(operands[0])
+                            special["insOpImm"] = 0
+                            special["insOpExt"] = 0
+                            pcpush = 2
 
-                    else: continue
+                        else: continue
 
-                elif instruction == "and":
-                    if len(operands) == 2:
-                        registers[reg(operands[1])] &= registers[reg(operands[0])]
+                    elif instruction == "dec":
+                        if len(operands) == 1:
+                            registers[reg(operands[0])] -= 1
 
-                        special["insOpCode"] = 6
-                        special["insOp0"] = 2
-                        special["insOp1"] = reg(operands[0])
-                        special["insOp2"] = reg(operands[1])
-                        special["insOpImm"] = 0
-                        special["insOpExt"] = 0
-                        pcpush = 2
+                            special["insOpCode"] = 6
+                            special["insOp0"] = 5
+                            special["insOp1"] = 0
+                            special["insOp2"] = reg(operands[0])
+                            special["insOpImm"] = 0
+                            special["insOpExt"] = 0
+                            pcpush = 2
 
-                    else: continue
+                        else: continue
 
-                elif instruction == "inc":
-                    if len(operands) == 1:
-                        registers[reg(operands[0])] += 1
+                    elif instruction == "deca":
+                        if len(operands) == 1:
+                            registers[reg(operands[0])] -= 4
 
-                        special["insOpCode"] = 6
-                        special["insOp0"] = 3
-                        special["insOp1"] = 0
-                        special["insOp2"] = reg(operands[0])
-                        special["insOpImm"] = 0
-                        special["insOpExt"] = 0
-                        pcpush = 2
+                            special["insOpCode"] = 6
+                            special["insOp0"] = 6
+                            special["insOp1"] = 0
+                            special["insOp2"] = reg(operands[0])
+                            special["insOpImm"] = 0
+                            special["insOpExt"] = 0
+                            pcpush = 2
 
-                    else: continue
+                        else: continue
 
-                elif instruction == "inca":
-                    if len(operands) == 1:
-                        registers[reg(operands[0])] += 4
+                    elif instruction == "not":
+                        if len(operands) == 1:
+                            registers[reg(operands[0])] = ~registers[reg(operands[0])]
 
-                        special["insOpCode"] = 6
-                        special["insOp0"] = 4
-                        special["insOp1"] = 0
-                        special["insOp2"] = reg(operands[0])
-                        special["insOpImm"] = 0
-                        special["insOpExt"] = 0
-                        pcpush = 2
+                            special["insOpCode"] = 6
+                            special["insOp0"] = 7
+                            special["insOp1"] = 0
+                            special["insOp2"] = reg(operands[0])
+                            special["insOpImm"] = 0
+                            special["insOpExt"] = 0
+                            pcpush = 2
 
-                    else: continue
+                        else: continue
 
-                elif instruction == "dec":
-                    if len(operands) == 1:
-                        registers[reg(operands[0])] -= 1
+                    elif instruction == "shl":
+                        if len(operands) == 2 and operands[0].startswith("$"):
+                            registers[reg(operands[1])] <<= int(operands[0][1:])
 
-                        special["insOpCode"] = 6
-                        special["insOp0"] = 5
-                        special["insOp1"] = 0
-                        special["insOp2"] = reg(operands[0])
-                        special["insOpImm"] = 0
-                        special["insOpExt"] = 0
-                        pcpush = 2
+                            special["insOpCode"] = 7
+                            special["insOp0"] = reg(operands[1])
+                            special["insOp1"] = int(hex(int(operands[0][1:]))[2:].zfill(2)[0], 16)
+                            special["insOp2"] = int(hex(int(operands[0][1:]))[2:].zfill(2)[1], 16)
+                            special["insOpImm"] = 0
+                            special["insOpExt"] = 0
+                            pcpush = 2
 
-                    else: continue
+                        else: continue
 
-                elif instruction == "deca":
-                    if len(operands) == 1:
-                        registers[reg(operands[0])] -= 4
+                    elif instruction == "shr":
+                        if len(operands) == 2 and operands[0].startswith("$"):
+                            registers[reg(operands[1])] >>= int(operands[0][1:])
 
-                        special["insOpCode"] = 6
-                        special["insOp0"] = 6
-                        special["insOp1"] = 0
-                        special["insOp2"] = reg(operands[0])
-                        special["insOpImm"] = 0
-                        special["insOpExt"] = 0
-                        pcpush = 2
+                            complement = (~int(operands[0][1:]) + 1) & 0xff
+                            special["insOpCode"] = 7
+                            special["insOp0"] = reg(operands[1])
+                            special["insOp1"] = int(hex(complement)[2:].zfill(2)[0], 16)
+                            special["insOp2"] = int(hex(complement)[2:].zfill(2)[1], 16)
+                            special["insOpImm"] = 0
+                            special["insOpExt"] = 0
+                            pcpush = 2
 
-                    else: continue
+                        else: continue
 
-                elif instruction == "not":
-                    if len(operands) == 1:
-                        registers[reg(operands[0])] = ~registers[reg(operands[0])]
+                    elif instruction == "ins":
+                        if len(command) == 1: command += [".pos", "0"]
+                        if command[1] == ".pos":
+                            pos = int(command[2], base = [10, 16][command[2].startswith("0x")])
+                            myslice = memory[pos : pos + 80]
+                            strn = ""
+                            
+                            for entry in myslice:
+                                strn += hex(entry)[2:].zfill(2)
 
-                        special["insOpCode"] = 6
-                        special["insOp0"] = 7
-                        special["insOp1"] = 0
-                        special["insOp2"] = reg(operands[0])
-                        special["insOpImm"] = 0
-                        special["insOpExt"] = 0
-                        pcpush = 2
+                            instructions = ["```avrasm", "Assembly:              Bytecode:"]
+                            ins, bytecode = get_bytecode(strn)
+                            instructions += ins
 
-                    else: continue
+                            for i in range(2, len(instructions)):
+                                instructions[i] = instructions[i].ljust(20) + " | " + bytecode[i - 2]
 
-                elif instruction == "shl":
-                    if len(operands) == 2 and operands[0].startswith("$"):
-                        registers[reg(operands[1])] <<= int(operands[0][1:])
+                            await ctx.send("\n".join(instructions + ["```"]))
+                            continue
 
-                        special["insOpCode"] = 7
-                        special["insOp0"] = reg(operands[1])
-                        special["insOp1"] = int(hex(int(operands[0][1:]))[2:].zfill(2)[0], 16)
-                        special["insOp2"] = int(hex(int(operands[0][1:]))[2:].zfill(2)[1], 16)
-                        special["insOpImm"] = 0
-                        special["insOpExt"] = 0
-                        pcpush = 2
+                        else: continue
 
-                    else: continue
-
-                elif instruction == "shr":
-                    if len(operands) == 2 and operands[0].startswith("$"):
-                        registers[reg(operands[1])] >>= int(operands[0][1:])
-
-                        complement = (~int(operands[0][1:]) + 1) & 0xff
-                        special["insOpCode"] = 7
-                        special["insOp0"] = reg(operands[1])
-                        special["insOp1"] = int(hex(complement)[2:].zfill(2)[0], 16)
-                        special["insOp2"] = int(hex(complement)[2:].zfill(2)[1], 16)
-                        special["insOpImm"] = 0
-                        special["insOpExt"] = 0
-                        pcpush = 2
-
-                    else: continue
-
-                elif instruction == "ins":
-                    if len(command) == 1: command += [".pos", "0"]
-                    if command[1] == ".pos":
-                        pos = int(command[2], base = [10, 16][command[2].startswith("0x")])
-                        myslice = memory[pos : pos + 80]
-                        strn = ""
-                        
-                        for entry in myslice:
-                            strn += hex(entry)[2:].zfill(2)
-
-                        instructions = ["```avrasm", "Assembly:              Bytecode:"]
-                        ins, bytecode = get_bytecode(strn)
-                        instructions += ins
-
-                        for i in range(2, len(instructions)):
-                            instructions[i] = instructions[i].ljust(20) + " | " + bytecode[i - 2]
-
-                        await ctx.send("\n".join(instructions + ["```"]))
+                    elif instruction == "help":
+                        await mbed(ctx, fields = [], footer = [])
                         continue
 
+                    elif instruction == "view":
+                        if len(command) == 1: command += [".pos", "0"]
+                        if command[1] == ".pos":
+                            pos = int(command[2], base = [10, 16][command[2].startswith("0x")])
+                            myslice = memory[pos : pos + 80]
+                            lines = ["```st", " Addr:  0: 1: 2: 3: Ascii:  Value:"]
+
+                            for i in range(20):
+                                num = "0x" + hex(pos + i * 4)[2:].zfill(4)
+                                a = hex(myslice[i * 4])
+                                b = hex(myslice[i * 4 + 1])
+                                c = hex(myslice[i * 4 + 2])
+                                d = hex(myslice[i * 4 + 3])
+                                asc = [chr(myslice[i * 4 + x]) for x in range(4)]
+                                res = ""
+
+                                for char in asc:
+                                    if ord(char) < 0x20 or ord(char) > 0x7f:
+                                        res += " "
+                                    else:
+                                        res += char
+
+                                lines.append(f"{num}: {a[2:].zfill(2)} {b[2:].zfill(2)} {c[2:].zfill(2)} {d[2:].zfill(2)} |{res}|  {int.from_bytes(myslice[i * 4 : i * 4 + 4], 'big')}")
+                            
+                            registerx = ["", "Registers (dec):"]
+                            regcontent = [f"r{i}: {registers[i]}" for i in range(len(registers))]
+                            registerx.append(" | ".join(regcontent))
+                            registerx.append("Registers (hex):")
+                            regcontent = [f"r{i}: {'0x'+hex(registers[i])[2:].zfill(8)}" for i in range(len(registers))]
+                            registerx.append(" | ".join(regcontent))
+                            registerx.append("")
+                            regcontent = [f"{key}: {hex(special[key])}" for key in special]
+                            registerx.append("\n".join(regcontent))
+                            myslice = memory[special['PC'] - pcpush : special['PC']]
+                            content = ""
+
+                            for i in range(len(myslice)):
+                                a = hex(myslice[i])
+                                res = a[2:].zfill(2)
+                                content += res
+
+                            registerx.append(f"instruction: {content}")
+                            await ctx.send("\n".join(lines + registerx + ["```"]))
+                            continue
+
                     else: continue
 
-                elif instruction == "view":
-                    if len(command) == 1: command += [".pos", "0"]
-                    if command[1] == ".pos":
-                        pos = int(command[2], base = [10, 16][command[2].startswith("0x")])
-                        myslice = memory[pos : pos + 80]
-                        lines = ["```st", " Addr:  0: 1: 2: 3: Ascii:  Value:"]
+                    hex1 = hex(special["insOpCode"])[2:] + hex(special["insOp0"])[2:]
+                    hex2 = hex(special["insOp1"])[2:] + hex(special["insOp2"])[2:]
+                    myslice = [int(hex1, 16), int(hex2, 16)] + [[], list(int(value).to_bytes(4, "big"))][pcpush == 6]
+                    memory[special["PC"] : special["PC"] + pcpush] = myslice
+                    strn = ""
 
-                        for i in range(20):
-                            num = "0x" + hex(pos + i * 4)[2:].zfill(4)
-                            a = hex(myslice[i * 4])
-                            b = hex(myslice[i * 4 + 1])
-                            c = hex(myslice[i * 4 + 2])
-                            d = hex(myslice[i * 4 + 3])
-                            asc = [chr(myslice[i * 4 + x]) for x in range(4)]
-                            res = ""
+                    for entry in myslice:
+                        strn += hex(entry)[2:].zfill(2)
 
-                            for char in asc:
-                                if ord(char) < 0x20 or ord(char) > 0x7f:
-                                    res += " "
-                                else:
-                                    res += char
+                    bytecodes.append(strn)
+                    cmdxs.append(cmdx)
 
-                            lines.append(f"{num}: {a[2:].zfill(2)} {b[2:].zfill(2)} {c[2:].zfill(2)} {d[2:].zfill(2)} |{res}|  {int.from_bytes(myslice[i * 4 : i * 4 + 4], 'big')}")
-                        
-                        registerx = ["", "Registers (dec):"]
-                        regcontent = [f"r{i}: {registers[i]}" for i in range(len(registers))]
-                        registerx.append(" | ".join(regcontent))
-                        registerx.append("Registers (hex):")
-                        regcontent = [f"r{i}: {hex(registers[i])}" for i in range(len(registers))]
-                        registerx.append(" | ".join(regcontent))
-                        registerx.append("")
-                        regcontent = [f"{key}: {hex(special[key])}" for key in special]
-                        registerx.append("\n".join(regcontent))
-                        myslice = memory[special['PC'] - pcpush : special['PC']]
-                        content = ""
+                    special["PC"] += pcpush
 
-                        for i in range(len(myslice)):
-                            a = hex(myslice[i])
-                            res = a[2:].zfill(2)
-                            content += res
+                    new = True
 
-                        registerx.append(f"instruction: {content}")
-                        await ctx.send("\n".join(lines + registerx + ["```"]))
-                        continue
+                except Exception as e:
+                    if debug:
+                        etype = type(e)
+                        trace = e.__traceback__
+                        await ctx.send(("```python\n" + "".join(traceback.format_exception(etype, e, trace, 999)) + "```").replace("home/rq2/.local/lib/python3.9/site-packages/", "").replace("/home/rq2/cs213bot/cs213bot/", ""))
+                    else: 
+                        await ctx.send("ERROR: " + str(e))
 
-                else: continue
+            if new: 
+                instructions = ["```avrasm"]
+                i = 0
+                j = 0
+                
+                for c in cmdxs:
+                    while commands[i] != cmdxs[j]:
+                        instructions.append(f"# {commands[i].ljust(18)} | invalid instruction")
+                        i += 1
+                        if i >= len(commands): break
 
-                hex1 = hex(special["insOpCode"])[2:] + hex(special["insOp0"])[2:]
-                hex2 = hex(special["insOp1"])[2:] + hex(special["insOp2"])[2:]
-                myslice = [int(hex1, 16), int(hex2, 16)] + [[], list(int(value).to_bytes(4, "big"))][pcpush == 6]
-                memory[special["PC"] : special["PC"] + pcpush] = myslice
-                strn = ""
+                    if i >= len(commands): break
 
-                for entry in myslice:
-                    strn += hex(entry)[2:].zfill(2)
+                    instructions.append(cmdxs[j].ljust(20) + " | " + bytecodes[j])
+                    j += 1
+                    i += 1
 
-                special["PC"] += pcpush
-                instructions = ["```avrasm", f"{' '.join(command)} | ({strn})"]
                 await ctx.send("\n".join(instructions + ["```"]))
-
-            except Exception as e:
-                if debug:
-                    etype = type(e)
-                    trace = e.__traceback__
-                    await ctx.send(("```python\n" + "".join(traceback.format_exception(etype, e, trace, 999)) + "```").replace("home/rq2/.local/lib/python3.9/site-packages/", "").replace("/home/rq2/cs213bot/cs213bot/", ""))
-                else: 
-                    await ctx.send("ERROR: " + str(e))
 
 
 
