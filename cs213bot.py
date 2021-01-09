@@ -133,9 +133,6 @@ async def on_message_edit(before, after):
 
 @bot.event
 async def on_message(message):
-    if isinstance(message.channel, discord.abc.PrivateChannel):
-        return
-
     if not message.author.bot:
         # debugging
         # with open("messages.txt", "a") as f:
@@ -179,9 +176,9 @@ async def on_command_error(ctx, error):
         trace = error.__traceback__
 
         try:
-            await ctx.send(("```" + "".join(traceback.format_exception(etype, error, trace, 999)) + "```").replace("C:\\Users\\William\\anaconda3\\lib\\site-packages\\", "").replace("D:\\my file of stuff\\discordbot\\", ""))
+            await ctx.send(("```python\n" + "".join(traceback.format_exception(etype, error, trace, 999)) + "```").replace("home/rq2/.local/lib/python3.9/site-packages/", ""))
         except Exception:
-            print(("```" + "".join(traceback.format_exception(etype, error, trace, 999)) + "```").replace("C:\\Users\\William\\anaconda3\\lib\\site-packages\\", "").replace("D:\\my file of stuff\\discordbot\\", ""))
+            print(("".join(traceback.format_exception(etype, error, trace, 999))).replace("home/rq2/.local/lib/python3.9/site-packages/", ""))
 
 
 bot.run(CS213BOT_KEY)
