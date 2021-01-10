@@ -1,3 +1,4 @@
+import numpy as np
 import os
 import random
 import signal
@@ -22,36 +23,79 @@ class Tools(commands.Cog):
         """
         `!endian` __`Displays various representations of a number given operations`__
 
-        **Usage:** !endian <equation>
+        **Usage:** !endian [equation]
 
         **Examples:**
         `!endian 0xDEADBEEF + 0x1337` [embed]
+        `!endian` [embed with random expression]
+
+        \*Explicit expressions can only be used by TAs. Students when using this command will be provided with random results.
         """
+        role = discord.utils.get(ctx.guild.roles, name="TA")
+        role2 = discord.utils.get(ctx.guild.roles, name="Prof/Staff")
+        if (role in ctx.author.roles or role2 in ctx.author.roles) and len(ctx.message.content[8:]):
+            val = ctx.message.content[8:]
 
-        val = ctx.message.content[8:]
-
-        if len(val) > 50 or any([x.lower() in val.lower() for x in list(globals().keys()) + ["globals", "importlib", "open", "format", "breakpoint", "lambda", "enumerate", "print", "input", "iter", "help", "__main__"]]):
-            raise BadArgs("Invalid equation: unsupported function.")
-
-        signal.signal(signal.SIGALRM, handler)
-        signal.alarm(10)
-
-        try:
-            res = eval("a = " + val)
-            signal.alarm(0)
-
-        except Exception as e:
-            signal.alarm(0)
-            raise BadArgs("Invalid equation: computation failure.")
-
-
-        if not isinstance(locals()['a'], int):
-            raise BadArgs("Invalid equation: non-integer result.")
+            ops = val.split("+")
+            nums = []
+            for num in ops:
+                nums.append(np.int32(int(num, 0)))
+            
+            a = sum(nums)
+        
+        else:
+            val = f"{np.int32(random.randint(0, 65535))} + {np.int32(random.randint(0, 65535))}"
+            exec("a = "+ val)
 
         result = locals()['a']
-        embed = discord.Embed(title = "Integer Visualizations", description = "not finished")
+        embed = discord.Embed(title = "Integer Visualizations", description = f"Operation: {val}", color = random.randint(0, 0xffffff))
+        text = list(val)
+        for i in range(len(text)):
+            if text[i].lower() not in ".x0123456789abcdef": text[i] = " "
+        numbers = "".join(text).split() + [str(result)]
+        
+        if len(numbers) > 25: numbers = [numbers[-1]]
 
-        await ctx.send("not finished")
+        for i in range(len(numbers)):
+            number = numbers[i]
+            num = int(number, 0)
+            if num > 65535: raise BadArgs("Number must fit in 4 bytes.")
+            end = list(num.to_bytes(4, 'big'))
+            end = ['0x' + hex(n)[2:].zfill(2) for n in end]
+            big = end.copy()
+            big = ','.join(big)
+            end.reverse()
+            end = ','.join(end)
+            versions = f"**Int**:\n{num}\n**Hex**:\n{hex(num)}\n**Binary**:\n{bin(num)}\n**Big Endian 4 byte**:\n{big}\n**Little Endian 4 byte**:\n{end}\n**2s Complement Int**:\n{(~num + 1) & 0xFFFFFFFF}"
+            if i == len(numbers) - 1:
+                embed.add_field(name = f"Result: {val} = {number}", value = versions)
+            else:
+                embed.add_field(name = f"Operand: {number}", value = versions)
+
+        embed.set_footer(text = f"Replying to {ctx.author}")
+
+        await ctx.send(embed = embed)
+
+    @commands.command()
+    @commands.cooldown(1, 5, commands.BucketType.user)
+    async def quiz(self, ctx):
+        """
+        `!quiz` __`Brings up a question on number conversions.`__
+
+        **Usage:** !quiz
+
+        **Examples:**
+        `!quiz` [embed]
+        """
+
+        if random.randrange(2) == 0:
+            number = random.randint(0, 65535)
+            await ctx.send(f"QUESTION: Convert {number} to hex.")
+            res = await get(ctx, self.bot, who = True)
+            if res.lower() != hex(number).lower():
+                return await ctx.send(f"False. {number} is {'b'}")
+
+
 
     @commands.command()
     @commands.cooldown(1, 5, commands.BucketType.user)
@@ -166,11 +210,11 @@ class Tools(commands.Cog):
             await ctx.send(f"FATAL ERROR: {e}")
 
 
-async def get(ctx, bot):
+async def get(ctx, bot, who = None):
     def check(m):
         nonlocal ww
         ww = m.content
-        return m.channel == ctx.channel and not m.author.bot
+        return m.channel.id == ctx.channel.id and not m.author.bot and (not who or m.author.id == ctx.author.id)
 
     ww = ""
     try:

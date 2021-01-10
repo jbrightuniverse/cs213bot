@@ -11,6 +11,7 @@ Clone the repo to your computer, and ensure your Discord Bot [Token](https://dis
 The bot requires the following pip packages: 
 - `discord` 
 - `googletrans`
+- `numpy`
 - `python-dotenv`
 - `pytz`
 - `requests`
