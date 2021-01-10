@@ -16,6 +16,7 @@ class Tools(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.dchannels = []
+        self.inquiz = []
 
     @commands.command()
     @commands.cooldown(1, 5, commands.BucketType.user)
@@ -31,6 +32,8 @@ class Tools(commands.Cog):
 
         \*Explicit expressions can only be used by TAs. Students when using this command will be provided with random results.
         """
+        if ctx.author.id in self.inquiz: return await ctx.send("Oops! Can't use this when using `!quiz`.")
+
         role = discord.utils.get(ctx.guild.roles, name="TA")
         role2 = discord.utils.get(ctx.guild.roles, name="Prof/Staff")
         if (role in ctx.author.roles or role2 in ctx.author.roles) and len(ctx.message.content[8:]):
@@ -44,33 +47,32 @@ class Tools(commands.Cog):
             a = sum(nums)
         
         else:
-            val = f"{np.int32(random.randint(0, 65535))} + {np.int32(random.randint(0, 65535))}"
-            exec("a = "+ val)
+            nums = [np.int32(random.randint(-65535, 65534)), np.int32(random.randint(-65535, 65534))]
+            a = sum(nums)
+            val = f"{nums[0]} + {nums[1]}"
 
-        result = locals()['a']
+        result = a
         embed = discord.Embed(title = "Integer Visualizations", description = f"Operation: {val}", color = random.randint(0, 0xffffff))
-        text = list(val)
-        for i in range(len(text)):
-            if text[i].lower() not in ".x0123456789abcdef": text[i] = " "
-        numbers = "".join(text).split() + [str(result)]
+        numbers = nums + [result]
         
-        if len(numbers) > 25: numbers = [numbers[-1]]
-
         for i in range(len(numbers)):
-            number = numbers[i]
-            num = int(number, 0)
-            if num > 65535: raise BadArgs("Number must fit in 4 bytes.")
-            end = list(num.to_bytes(4, 'big'))
-            end = ['0x' + hex(n)[2:].zfill(2) for n in end]
+            numx = numbers[i]
+            if numx < 0: 
+                num = numx + 4294967296
+            else:
+                num = numx
+
+            end = int(num).to_bytes(4, "big")
+            end = ['0x' + hex(int(n))[2:].zfill(2) for n in end]
             big = end.copy()
             big = ','.join(big)
             end.reverse()
             end = ','.join(end)
-            versions = f"**Int**:\n{num}\n**Hex**:\n{hex(num)}\n**Binary**:\n{bin(num)}\n**Big Endian 4 byte**:\n{big}\n**Little Endian 4 byte**:\n{end}\n**2s Complement Int**:\n{(~num + 1) & 0xFFFFFFFF}"
+            versions = f"**Unsigned Int**:\n{num}\n**Hex**:\n{hex(num)}\n**Binary**:\n{bin(num)}\n**Big Endian 4 byte**:\n{big}\n**Little Endian 4 byte**:\n{end}"
             if i == len(numbers) - 1:
-                embed.add_field(name = f"Result: {val} = {number}", value = versions)
+                embed.add_field(name = f"Signed Result:\n{val} = {numx}", value = versions)
             else:
-                embed.add_field(name = f"Operand: {number}", value = versions)
+                embed.add_field(name = f"Signed Operand: {numx}", value = versions)
 
         embed.set_footer(text = f"Replying to {ctx.author}")
 
@@ -78,22 +80,69 @@ class Tools(commands.Cog):
 
     @commands.command()
     @commands.cooldown(1, 5, commands.BucketType.user)
-    async def quiz(self, ctx):
+    async def quiz(self, ctx, key = None):
         """
         `!quiz` __`Brings up a question on number conversions.`__
 
-        **Usage:** !quiz
+        **Usage:** !quiz [type]
 
         **Examples:**
         `!quiz` [embed]
+        `!quiz hex` [embed]
+        `!quiz endian` [embed]
         """
 
-        if random.randrange(2) == 0:
+        if key == "hex": key = random.randrange(2)
+        elif key == "endian": key = random.randint(2, 3)
+        else:
+            key = random.randrange(4)
+
+        if key == 0:
             number = random.randint(0, 65535)
             await ctx.send(f"QUESTION: Convert {number} to hex.")
             res = await get(ctx, self.bot, who = True)
             if res.lower() != hex(number).lower():
-                return await ctx.send(f"False. {number} is {'b'}")
+                return await ctx.send(f"False. {number} is {hex(number)} in hex.")
+            else:
+                return await ctx.send("Correct!")
+
+        elif key == 1:
+            number = random.randint(0, 65535)
+            await ctx.send(f"QUESTION: Convert {hex(number)} to base 10.")
+            res = await get(ctx, self.bot, who = True)
+            if res != number:
+                return await ctx.send(f"False. {hex(number)} is {number} in base 10.")
+            else:
+                return await ctx.send("Correct!")
+
+        elif key == 2:
+            number = random.randint(0, 4294967296)
+            await ctx.send(f"QUESTION: what is the Big Endian representation of {hex(number)}?\nEnter hex numbers: e.g. 0x12 0x34 0x56 0x78")
+            res = await get(ctx, self.bot, who = True)
+            res = res.replace(",", "").replace(" ", "").replace("0x", "")
+            if "0x" + res.lstrip("0") != hex(number):
+                result = hex(number)[2:].zfill(8)
+                result = " ".join(["0x" + result[i:i+2] for i in range(0, 8, 2)])
+                return await ctx.send(f"False. {hex(number)} is {result} in Big Endian form.")
+            else:
+                return await ctx.send("Correct!")
+
+        else:
+            number = random.randint(0, 4294967296)
+            await ctx.send(f"QUESTION: what is the Little Endian representation of {hex(number)}?\nEnter hex numbers: e.g. 0x12 0x34 0x56 0x78")
+            res = await get(ctx, self.bot, who = True)
+            res = res.replace(",", " ").split()
+            res.reverse()
+            res = " ".join(res).replace(" ", "").replace("0x", "")
+            if "0x" + res.lstrip("0") != hex(number):
+                result = hex(number)[2:].zfill(8)
+                result = ["0x" + result[i:i+2] for i in range(0, 8, 2)]
+                result.reverse()
+                result = " ".join(result)
+                return await ctx.send(f"False. {hex(number)} is {result} in Little Endian form.")
+            else:
+                return await ctx.send("Correct!")
+
 
 
 
