@@ -133,6 +133,9 @@ async def on_message_edit(before, after):
 
 @bot.event
 async def on_message(message):
+    if isinstance(message.channel, discord.abc.PrivateChannel):
+        return
+        
     if not message.author.bot:
         # debugging
         # with open("messages.txt", "a") as f:
@@ -141,6 +144,8 @@ async def on_message(message):
 
         # this is some weird bs happening only with android users in certain servers and idk why it happens
         # but basically the '@' is screwed up
+        if message.channel.id == 797643936603963402 and len(message.attachments):
+            await message.add_reaction("⬆️")
         if re.findall(r"<<@&457618814058758146>&?\d{18}>", message.content):
             new = message.content.replace("<@&457618814058758146>", "@")
             await message.channel.send(new)
