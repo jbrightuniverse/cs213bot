@@ -275,7 +275,7 @@ class Commands(commands.Cog):
         nam = int(str((datetime.now() - datetime(1970, 1, 1)).total_seconds()).replace(".", "")) + ctx.author.id
         nam = f"213dm-{nam}"
         # create custom role
-        role = await guild.create_role(name=nam, colour=discord.Colour(0x2f3136))
+        role = await guild.create_role(name=nam, colour=discord.Colour(0x88ff88))
 
         for user in ctx.message.mentions:
             try:

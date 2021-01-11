@@ -44,7 +44,7 @@ class SM213(commands.Cog):
         memptr = 0
         static_mode = False
 
-        await mbed(ctx, "Discord Simple Machine 213", "**Type `help` for a commands list.**")
+        await mbed(ctx, "Discord Simple Machine 213", "**Type `help` for a commands list.**\n\nNOTE: branching commands do not currently exhibit expected behaviour. Please refrain from relying on their current characteristics for learning.")
 
         pcpush = 0
         value = 0
