@@ -23,6 +23,8 @@
 - [ ] plaintext current instruction in `view`
 
 **Long-Term:**
+- [ ] support the use of labels for addresses in memory; allow these labels to be used with branching
+- [ ] support assignments of static variables in memory with `.long`
 - [ ] better feedback for running commands
      * - [ ] figure out whether it would be useful to display memory or registers when a command executes
 - [ ] interactive and continuous step mode: treat the existence of a double `000000000000` instruction (two `ld $0, r0` instructions in a row) as a breakpoint when stepping or running indefinitely; set the PC and memory pointer to that of the first `ld`
