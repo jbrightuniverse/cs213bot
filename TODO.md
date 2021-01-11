@@ -18,6 +18,7 @@
      * - [ ] optional speed parameter for controlling whether each step is displayed explicitly; `1` would edit the message every second, `2` would skip every second instruction, still editing every second, no parameter would not display anything but the last instruction
 - [ ] plaintext current instruction in `view`
 - [ ] interactive and continuous step mode: treat the existence of a double `000000000000` instruction (two `ld $0, r0` instructions in a row) as a breakpoint when stepping or running indefinitely; set the PC and memory pointer to that of the first `ld`
+     * - [ ] use this mechanism to not print exess instructions in `ins`
 - [ ] better way of explaining the two different modes
 
 **Long-Term:**
