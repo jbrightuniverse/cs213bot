@@ -35,6 +35,10 @@
 - [ ] integrated reference for the sm213 language
      * - [ ] command for accessing docs for an instruction
      * - [ ] sample programs?
+- [ ] `!ld` and `!st` commands for visualizing, in GIF form, the movement of data from memory to registers and back
+     *  - [ ] ld
+     *  - [ ] st
+
 
 ## tools
 
@@ -46,6 +50,3 @@
     *  - [ ] lists
     *  - [ ] functions
     *  - [ ] structs
-- [ ] `!ld` and `!st` commands for visualizing, in GIF form, the movement of data from memory to registers and back
-    *  - [ ] ld
-    *  - [ ] st
