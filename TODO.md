@@ -52,3 +52,9 @@
     *  - [ ] lists
     *  - [ ] functions
     *  - [ ] structs
+    
+    
+## overall
+
+**Long-Term:**
+- [ ] use the simulator framework to implement Y86 for CPSC 313 and deploy the bot in the official 313 course Discord server
