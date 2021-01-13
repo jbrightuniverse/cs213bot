@@ -8,10 +8,10 @@
 - [X] every instruction accepting an immediate must be able to accept hex or decimal, and optionally allow a $ at the front or not
 - [X] values display as unsigned; they should be displaying as signed 4 byte integers instead
 - [X] abstract hex to decimal converter away from being duplicated
-- [ ] abstract the functionality for converting sm213 syntax to bytecode from the actual code execution
-     * - [ ] isolated sm213 to bytecode converter
-     * - [ ] switch instruction executor (step function) to rely on bytecode inputs
-     * - [ ] reduce the number of variables in the signature of the step function
+- [X] abstract the functionality for converting sm213 syntax to bytecode from the actual code execution
+     * - [X] isolated sm213 to bytecode converter
+     * - [X] switch instruction executor (step function) to rely on bytecode inputs
+     * - [X] reduce the number of variables in the signature of the step function
 - [ ] branching
      * - [ ] in interactive `auto on` mode, branching should result in the simulator automatically executing any instructions it finds, up until it finds a halt or it reaches an address greater or equal to the address it branched from
      * - [ ] in text editor `auto off` mode, branching should already work; fix if it does not
