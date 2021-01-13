@@ -712,6 +712,10 @@ def signed(val):
     return val
 
 
+def read_num(val): 
+    return int(val.replace("$", ""), 0)
+
+
 def get_bytecode(strn):
     counter = 0
     instructions = []
