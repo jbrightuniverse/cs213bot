@@ -1,5 +1,6 @@
 import asyncio
 import numpy as np
+import os
 import random
 import traceback
 
@@ -9,6 +10,22 @@ from discord.ext import commands
 class SM213(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+
+
+    @commands.command()
+    @commands.is_owner()
+    async def commit(self, ctx):
+        message = ctx.message.content[8:]
+        if not message: 
+            return await ctx.send("Message?")
+
+        text = os.popen(f"git add-commit -m '{message}'").read()
+        if not text: 
+            return await ctx.send("Failed.")
+
+        text = os.popen(f"git push origin master").read()
+        await ctx.send(text + "\nPushed to master.")
+
 
     @commands.command()
     @commands.cooldown(1, 5, commands.BucketType.user)
@@ -534,7 +551,8 @@ async def step(ctx, stepmode, debug, new, cmdx, command, special, bytecodes, cmd
             spacer = '\u200b\t'
             basics = f"If you opened this, you have the simulator open. To execute code, type the line you wish to execute into Discord.\n\nThe line will be executed immediately and saved into memory.\nInstructions start loading at `0x0`.\n\nType multiple lines at once to execute all of them at once. Make sure each instruction is on a new line.\n\n{spacer*10}Aside from the sm213 ISA, the following **special commands** also exist.\n{spacer*10}These are **not part of sm213** and **cannot be used in sm213 programs**\n{spacer*25}but can be used to manipulate the Discord simulator\n{spacer*40}and the Discord simulator **alone**.\n\n_ _"
             fields.append([":1234: Basics\n_ _", basics])
-            specialx = "`view`\nView the current memory layout in its entirety, starting from memory position `0x0`.\n\n`view .pos 0x1000`\nDoes the above, but views memory at `0x1000`. Change this value to view a different memory location.\n\n"
+            specialx = "`view`\nDefault view, views registers only.\n\n`view .pos 0x1000`\nViews memory contents, starting from position `0x1000`. Change this value to view a different memory location.\n\n"
+            specialx += "`view mem`\nShortcut to view memory at `0x0`.\n\n`view reg`\nViews all register contents.\n\n`view all`\nViews everything.\n\n`view .pos 0x1000 all`\nViews everything with memory starting from `0x1000`.\n\n"
             specialx += "`ins`\nView the current set of instructions. This is done by reading off the memory as if everything were instructions.\n\n`ins .pos 0x1000`\nViews the current set of instructions by reading them off memory from `0x1000`. Change this value to view a different memory location.\n\n"
             specialx += "`auto on`\nActivates auto mode. This means any command you type executes immediately.\n\n`auto off`\nDeactivates auto mode. This turns the system into a text-editor-esque IDE where commands you enter don't execute.\n\n"
             specialx += "`step`\nManually executes the instruction at the current location of the Program Counter (PC). Increments PC accordingly.\n\n"
