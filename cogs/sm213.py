@@ -400,7 +400,7 @@ async def step(ctx, stepmode, debug, new, cmdx, command, special, bytecodes, cmd
                 if not static_mode:
                     registers[reg(operands[1])] >>= read_num(operands[0])
 
-                complement = (~read_num(operands[0])) + 1) & 0xff
+                complement = (~read_num(operands[0]) + 1) & 0xff
                 special["insOpCode"] = 7
                 special["insOp0"] = reg(operands[1])
                 special["insOp1"] = int(hex(complement)[2:].zfill(2)[0], 16)
