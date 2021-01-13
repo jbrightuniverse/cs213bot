@@ -5,9 +5,9 @@
 **Short/Medium-Term:**
 - [X] separate `view` using command flags to separately view memory and registers in smaller messages; make one of these smaller results the default
 - [ ] fix the index out of range error when stepping too far
-- [ ] every instruction accepting an immediate must be able to accept hex or decimal, and optionally allow a $ at the front or not
+- [X] every instruction accepting an immediate must be able to accept hex or decimal, and optionally allow a $ at the front or not
 - [X] values display as unsigned; they should be displaying as signed 4 byte integers instead
-- [ ] abstract common functions (hex to decimal converter, for example) away from being duplicated
+- [X] abstract hex to decimal converter away from being duplicated
 - [ ] abstract the functionality for converting sm213 syntax to bytecode from the actual code execution
      * - [ ] isolated sm213 to bytecode converter
      * - [ ] switch instruction executor (step function) to rely on bytecode inputs

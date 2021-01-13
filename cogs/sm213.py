@@ -153,10 +153,9 @@ async def step(ctx, stepmode, debug, new, cmdx, command, special, bytecodes, cmd
     try:
 
         if instruction == "ld":
-            if operands[0].startswith("$"):
+            if len(operands) == 2 and "(" not in operands[0]:
                 # load immediate
-                number = operands[0][1:]
-                value = int(number, base = [10, 16][number.startswith("0x")])
+                value = read_num(operands[0])
                 if not static_mode:
                     registers[reg(operands[1])] = value
 
@@ -382,14 +381,14 @@ async def step(ctx, stepmode, debug, new, cmdx, command, special, bytecodes, cmd
             else: return None
 
         elif instruction == "shl":
-            if len(operands) == 2 and operands[0].startswith("$"):
+            if len(operands) == 2:
                 if not static_mode:
-                    registers[reg(operands[1])] <<= int(operands[0][1:])
+                    registers[reg(operands[1])] <<= read_num(operands[0])
 
                 special["insOpCode"] = 7
                 special["insOp0"] = reg(operands[1])
-                special["insOp1"] = int(hex(int(operands[0][1:]))[2:].zfill(2)[0], 16)
-                special["insOp2"] = int(hex(int(operands[0][1:]))[2:].zfill(2)[1], 16)
+                special["insOp1"] = int(hex(read_num(operands[0]))[2:].zfill(2)[0], 16)
+                special["insOp2"] = int(hex(read_num(operands[0]))[2:].zfill(2)[1], 16)
                 special["insOpImm"] = 0
                 special["insOpExt"] = 0
                 pcpush = 2
@@ -397,11 +396,11 @@ async def step(ctx, stepmode, debug, new, cmdx, command, special, bytecodes, cmd
             else: return None
 
         elif instruction == "shr":
-            if len(operands) == 2 and operands[0].startswith("$"):
+            if len(operands) == 2:
                 if not static_mode:
-                    registers[reg(operands[1])] >>= int(operands[0][1:])
+                    registers[reg(operands[1])] >>= read_num(operands[0])
 
-                complement = (~int(operands[0][1:]) + 1) & 0xff
+                complement = (~read_num(operands[0])) + 1) & 0xff
                 special["insOpCode"] = 7
                 special["insOp0"] = reg(operands[1])
                 special["insOp1"] = int(hex(complement)[2:].zfill(2)[0], 16)
@@ -414,8 +413,8 @@ async def step(ctx, stepmode, debug, new, cmdx, command, special, bytecodes, cmd
 
         elif instruction in ["br", "bgt", "beq"]:
             if (instruction == "br" and len(operands) == 1) or (instruction in ["beq", "bgt"] and len(operands) == 2):
-                number = operands[[1, 0][instruction == "br"]].replace("$", "")
-                num = int(number, base = [10, 16][number.startswith("0x")])
+                number = operands[[1, 0][instruction == "br"]]
+                num = read_num(number)
                 pp = (num - special["PC"])//2
                 if instruction == "br" or (registers[reg(operands[0])] == 0 and instruction == "beq") or (registers[reg(operands[0])] > 0 and instruction == "bgt"):
                     if not static_mode:
@@ -436,8 +435,7 @@ async def step(ctx, stepmode, debug, new, cmdx, command, special, bytecodes, cmd
 
         elif instruction == "gpc":
             if len(operands) == 2:
-                number = operands[0].replace("$", "")
-                num = int(number, base = [10, 16][number.startswith("0x")])
+                num = read_num(operands[0])
                 if not static_mode:
                     registers[reg(operands[1])] = special["PC"] + num
 
@@ -454,8 +452,7 @@ async def step(ctx, stepmode, debug, new, cmdx, command, special, bytecodes, cmd
         elif instruction == "j":
             if len(operands) == 1:
                 if "(" not in operands[0]:
-                    number = operands[0].replace("$", "")
-                    num = int(number, base = [10, 16][number.startswith("0x")])
+                    num = read_num(operands[0])
                     if not static_mode:
                         special["PC"] = num
 
@@ -469,8 +466,7 @@ async def step(ctx, stepmode, debug, new, cmdx, command, special, bytecodes, cmd
 
                 elif "*" not in operands[0] and "(" in operands[0]:
                     components = operands[0].split("(")
-                    number = operands[0].replace("$", "")
-                    offset = int(number, base = [10, 16][number.startswith("0x")])
+                    offset = read_num(operands[0])
                     src = registers[reg(components[1][:-1])]
                     if not static_mode:
                         special["PC"] = src + offset
@@ -488,8 +484,7 @@ async def step(ctx, stepmode, debug, new, cmdx, command, special, bytecodes, cmd
                 elif "*" in operands[0] and "(" in operands[0]:
                     operands[0] = operands[0][1:]
                     components = operands[0].split("(")
-                    number = operands[0].replace("$", "")
-                    offset = int(number, base = [10, 16][number.startswith("0x")])
+                    offset = read_num(operands[0])
                     src = registers[reg(components[1][:-1])]
                     if not static_mode:
                         special["PC"] = memory[src + offset]
