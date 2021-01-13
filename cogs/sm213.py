@@ -555,47 +555,63 @@ async def step(ctx, stepmode, debug, new, cmdx, command, special, bytecodes, cmd
             return memptr, static_mode, pcpush, value, new 
 
         elif instruction == "view":
-            if len(command) == 1: command += [".pos", "0"]
+            if len(command) == 1: command += [".pos", "0", "reg"]
+            elif command == ["view", "all"]: command = ["view", ".pos", "0", "all"]
+            elif command == ["view", "reg"]: command = ["view", ".pos", "0", "reg"]
+            elif command == ["view", "mem"]: command = ["view", ".pos", "0", "mem"]
+            elif len(command) == 3: command += ["mem"]
             if command[1] == ".pos":
-                pos = int(command[2], base = [10, 16][command[2].startswith("0x")])
-                myslice = memory[pos : pos + 80]
-                lines = ["```st", " Addr:  0: 1: 2: 3: Ascii:  Value:"]
+                if command[3] == "all":
+                    mode = ["mem", "reg"]
+                else:
+                    mode = [command[3]]
 
-                for i in range(20):
-                    num = "0x" + hex(pos + i * 4)[2:].zfill(4)
-                    a = hex(myslice[i * 4])
-                    b = hex(myslice[i * 4 + 1])
-                    c = hex(myslice[i * 4 + 2])
-                    d = hex(myslice[i * 4 + 3])
-                    asc = [chr(myslice[i * 4 + x]) for x in range(4)]
-                    res = ""
+                if "mem" in mode:
+                    pos = int(command[2], base = [10, 16][command[2].startswith("0x")])
+                    myslice = memory[pos : pos + 80]
+                    lines = ["```st", " Addr:  0: 1: 2: 3: Ascii:  Value:"]
 
-                    for char in asc:
-                        if ord(char) < 0x20 or ord(char) > 0x7f:
-                            res += " "
-                        else:
-                            res += char
+                    for i in range(20):
+                        num = "0x" + hex(pos + i * 4)[2:].zfill(4)
+                        a = hex(myslice[i * 4])
+                        b = hex(myslice[i * 4 + 1])
+                        c = hex(myslice[i * 4 + 2])
+                        d = hex(myslice[i * 4 + 3])
+                        asc = [chr(myslice[i * 4 + x]) for x in range(4)]
+                        res = ""
 
-                    lines.append(f"{num}: {a[2:].zfill(2)} {b[2:].zfill(2)} {c[2:].zfill(2)} {d[2:].zfill(2)} |{res}|  {int.from_bytes(myslice[i * 4 : i * 4 + 4], 'big')}")
+                        for char in asc:
+                            if ord(char) < 0x20 or ord(char) > 0x7f:
+                                res += " "
+                            else:
+                                res += char
+
+                        lines.append(f"{num}: {a[2:].zfill(2)} {b[2:].zfill(2)} {c[2:].zfill(2)} {d[2:].zfill(2)} |{res}|  {int.from_bytes(myslice[i * 4 : i * 4 + 4], 'big')}")
                 
-                registerx = ["", "Registers (dec):"]
-                regcontent = [f"r{i}: {registers[i]}" for i in range(len(registers))]
-                registerx.append(" | ".join(regcontent))
-                registerx.append("Registers (hex):")
-                regcontent = [f"r{i}: {'0x'+hex(registers[i])[2:].zfill(8)}" for i in range(len(registers))]
-                registerx.append(" | ".join(regcontent))
-                registerx.append("")
-                regcontent = [f"{key}: {hex(specialregisters[key])}" for key in specialregisters]
-                registerx.append("\n".join(regcontent))
-                myslice = memory[special['PC'] - pcpush : special['PC']]
-                content = ""
+                else:
+                    lines = ["```st"]
 
-                for i in range(len(myslice)):
-                    a = hex(myslice[i])
-                    res = a[2:].zfill(2)
-                    content += res
+                registerx = []
+                if "reg" in mode:
+                    if "mem" in mode: registerx += [""]
+                    registerx += ["Registers (dec):"]
+                    regcontent = [f"r{i}: {registers[i]}" for i in range(len(registers))]
+                    registerx.append(" | ".join(regcontent))
+                    registerx.append("Registers (hex):")
+                    regcontent = [f"r{i}: {'0x'+hex(registers[i])[2:].zfill(8)}" for i in range(len(registers))]
+                    registerx.append(" | ".join(regcontent))
+                    registerx.append("")
+                    regcontent = [f"{key}: {hex(specialregisters[key])}" for key in specialregisters]
+                    registerx.append("\n".join(regcontent))
+                    myslice = memory[special['PC'] - pcpush : special['PC']]
+                    content = ""
 
-                registerx.append(f"instruction: {content}")
+                    for i in range(len(myslice)):
+                        a = hex(myslice[i])
+                        res = a[2:].zfill(2)
+                        content += res
+
+                    registerx.append(f"instruction: {content}")
                 await ctx.send("\n".join(lines + registerx + [f"Edit Pointer: {hex(memptr)}", f"Mode: {['Interactive', 'Text Editor'][static_mode]}", "```"]))
                 return None
 

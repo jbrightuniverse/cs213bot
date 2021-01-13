@@ -38,7 +38,7 @@ class Meta(commands.Cog):
                 embed.add_field(name=k, value=" ".join(f"`{i}`" for i in v.get_commands() if not i.hidden), inline=False)
 
             embed.set_thumbnail(url=self.bot.user.avatar_url)
-            embed.add_field(name = "_ _\nSupport Bot Development: visit the CS213Bot repo at https://github.com/jbrightuniverse/cs213bot/", value = "_ _\nCS213Bot is based on CS221Bot. Support them at https://github.com/Person314159/cs221bot/")
+            embed.add_field(name = "_ _\nSupport Bot Development: visit the CS213Bot repo at https://github.com/jbrightuniverse/cs213bot/", value = "_ _\nCS213Bot is based on CS221Bot. Support them at https://github.com/Person314159/cs221bot/\n\nCall ++help to access C++Bot from within this bot.\nhttps://github.com/jbrightuniverse/C-Bot")
             embed.set_footer(text=f"The sm213 language was created by Dr. Mike Feeley of the CPSC department at UBCV.\nUsed with permission.\n\nRequested by {ctx.author.display_name}", icon_url=str(ctx.author.avatar_url))
             await ctx.send(embed=embed)
         else:

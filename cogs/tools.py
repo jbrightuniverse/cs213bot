@@ -1,4 +1,5 @@
 import numpy as np
+import math
 import os
 import random
 import signal
@@ -184,7 +185,7 @@ class Tools(commands.Cog):
 
                 val = val.replace("(int)", "0xFFFFFFFF & ").replace("(long)", "").replace("(float)", "1.0 * ").replace("(char)", "0XFF & ")
 
-                if any([x.lower() in val.lower() for x in list(globals().keys()) + ["globals", "importlib", "open", "format", "breakpoint", "lambda", "enumerate", "print", "input", "iter", "help", "__main__"]]):
+                if any([x.lower() in val.lower() for x in list(globals().keys()) + [";", "eval", "exec", "class", "raise", "dir", "quit", "vars", "filter", "license", "pdb", "import", "ctypes", "globals", "importlib", "open", "format", "breakpoint", "lambda", "enumerate", "print", "input", "iter", "help", "__main__"]]):
                     await ctx.send("ERROR: banned function")
                     continue
 
