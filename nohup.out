@@ -25,3 +25,12 @@ Traceback (most recent call last):
     if msg := next(channel.history(limit=1), None):
 TypeError: 'HistoryIterator' object is not an iterator
 fatal: could not read Username for 'https://github.com': No such device or address
+fatal: could not read Username for 'https://github.com': No such device or address
+tools.py module loaded
+meta.py module loaded
+commands.py module loaded
+sm213.py module loaded
+Logged in successfully
+Logged in successfully
+Logged in successfully
+Logged in successfully

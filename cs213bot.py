@@ -84,10 +84,13 @@ async def wipe_dms():
         now = datetime.utcnow()
 
         for channel in filter(lambda c: c.name.startswith("213dm-"), guild.channels):
-            if msg := next(channel.history(limit=1), None):
+            async for msg in channel.history(limit=1):
                 if (now - msg.created_at).total_seconds() >= 86400:
+                    await next(i for i in guild.roles if i.name == channel.name).delete()
                     await channel.delete()
+                    break
             else:
+                await next(i for i in guild.roles if i.name == channel.name).delete()
                 await channel.delete()
 
 

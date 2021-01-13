@@ -3,7 +3,7 @@
 ## sm213: Discord Simple Machine
 
 **Short/Medium-Term:**
-- [ ] separate `view` using command flags to separately view memory and registers in smaller messages; make one of these smaller results the default
+- [X] separate `view` using command flags to separately view memory and registers in smaller messages; make one of these smaller results the default
 - [ ] fix the index out of range error when stepping too far
 - [ ] every instruction accepting an immediate must be able to accept hex or decimal, and optionally allow a $ at the front or not
 - [ ] values display as unsigned; they should be displaying as signed 4 byte integers instead
