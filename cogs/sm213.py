@@ -23,7 +23,7 @@ class SM213(commands.Cog):
         if not text: 
             return await ctx.send("Failed.")
 
-        text = os.popen(f"git push origin master").read()
+        os.popen(f"git push origin master").read()
         await ctx.send(text + "\nPushed to master.")
 
 
