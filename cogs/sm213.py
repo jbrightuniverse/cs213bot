@@ -604,7 +604,9 @@ async def step(ctx, stepmode, debug, new, cmdx, command, special, bytecodes, cmd
                             else:
                                 res += char
 
-                        lines.append(f"{num}: {a[2:].zfill(2)} {b[2:].zfill(2)} {c[2:].zfill(2)} {d[2:].zfill(2)} |{res}|  {int.from_bytes(myslice[i * 4 : i * 4 + 4], 'big')}")
+                        val = signed(int.from_bytes(myslice[i * 4 : i * 4 + 4], 'big'))
+                        
+                        lines.append(f"{num}: {a[2:].zfill(2)} {b[2:].zfill(2)} {c[2:].zfill(2)} {d[2:].zfill(2)} |{res}|  {val}")
                 
                 else:
                     lines = ["```st"]
@@ -613,7 +615,7 @@ async def step(ctx, stepmode, debug, new, cmdx, command, special, bytecodes, cmd
                 if "reg" in mode:
                     if "mem" in mode: registerx += [""]
                     registerx += ["Registers (dec):"]
-                    regcontent = [f"r{i}: {registers[i]}" for i in range(len(registers))]
+                    regcontent = [f"r{i}: {signed(registers[i])}" for i in range(len(registers))]
                     registerx.append(" | ".join(regcontent))
                     registerx.append("Registers (hex):")
                     regcontent = [f"r{i}: {'0x'+hex(registers[i])[2:].zfill(8)}" for i in range(len(registers))]
@@ -701,6 +703,13 @@ async def mbed(ctx, upper, lower, fields = [], thumbnail = None, footer = None):
         embed.set_footer(text = f"Replying to {ctx.author}")
         
     return await ctx.send(embed = embed)
+
+
+def signed(val):
+    if val > 2147483647: 
+        val = -1 * (4294967296 - val)
+
+    return val
 
 
 def get_bytecode(strn):

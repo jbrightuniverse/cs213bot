@@ -219,7 +219,8 @@ class Tools(commands.Cog):
                         await ctx.send(text)
                         continue
                     except Exception as e: 
-                        await ctx.send(str(e))
+                        if str(e) != "list index out of range":
+                            await ctx.send(str(e))
 
                 signal.alarm(10)
                 try:
