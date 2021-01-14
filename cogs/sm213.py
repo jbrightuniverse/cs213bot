@@ -114,11 +114,11 @@ class SM213(commands.Cog):
                     originalcommand = instructions[0] 
 
                     # step
-                    memptr, splreg["PC"], bytecode = step(ctx, instruction, splreg["PC"], memptr, memory, registers, should_execute, False, debug)
+                    memptr, splreg["PC"], bytecode = step(ctx, instructions, splreg["PC"], memptr, memory, registers, should_execute, False, debug)
 
                 else:
                     # we found an instruction: convert it to bytecode
-                    instruction = get_bytes_from_ins(command, pc)
+                    instruction = get_bytes_from_ins(command, splreg["PC"])
 
                     # step
                     memptr, splreg["PC"], bytecode = step(ctx, instruction, splreg["PC"], memptr, memory, registers, should_execute, True, debug)
@@ -148,7 +148,9 @@ async def special_commands(ctx, command, memory, registers, should_execute, memp
     some special non-sm213 commands
     """
     
-    instruction == command[0]
+    instruction = command[0]
+    operands = "".join(command[1:])
+    
     if instruction == "ins":
         # instruction display mode
         if len(command) == 1:
@@ -281,7 +283,7 @@ async def special_commands(ctx, command, memory, registers, should_execute, memp
 
                 registerx.append(f"instruction: {content}")
 
-            return await ctx.send("\n".join(lines + registerx + [f"Edit Pointer: {hex(memptr)}", f"Mode: {['Interactive', 'Text Editor'][static_mode]}", "```"]))
+            return await ctx.send("\n".join(lines + registerx + [f"Edit Pointer: {hex(memptr)}", f"Mode: {['Interactive', 'Text Editor'][should_execute]}", "```"]))
 
     # catch-all exit, return None if nothing worked
     return None
@@ -476,7 +478,7 @@ def get_bytes_from_ins(command, pc):
         if len(operands) == 2 and "(" not in operands[0]:
             # load immediate: 0d--vvvvvvvv 
             # e.g. ld $0x100, r0
-            return compress_bytes(0, reg(operands[1]), 0, 0, value)
+            return compress_bytes(0, reg(operands[1]), 0, 0, read_num(operands[0]))
             
         elif len(operands) == 2 and "(" in operands[0] and operands[0][-1] == ")":
             # load base + distance: 1psd
@@ -686,8 +688,8 @@ def compress_bytes(opcode, op0, op1, op2, value = None):
     # convert integer values to compressed hex
     # this takes the hex values (guaranteed to be single character as each input is a single hexit), without the 0x, 
     # and puts them side by side
-    hex1 = hex(special["insOpCode"])[2:] + hex(special["insOp0"])[2:]
-    hex2 = hex(special["insOp1"])[2:] + hex(special["insOp2"])[2:]
+    hex1 = hex(opcode)[2:] + hex(op0)[2:]
+    hex2 = hex(op1)[2:] + hex(op2)[2:]
 
     # start array
     myslice = [int(hex1, 16), int(hex2, 16)]
@@ -713,7 +715,7 @@ def get_ins_from_bytes(strn, pc):
 
     elif opcode == "1":
         # load base + distance
-        return f"ld {int(strn[1], 16) * 4}(r{strn[2]}), r{strn[3]}
+        return f"ld {int(strn[1], 16) * 4}(r{strn[2]}), r{strn[3]}"
 
     elif opcode == "2":
         # load indexed
