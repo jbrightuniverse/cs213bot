@@ -144,6 +144,10 @@ class SM213(commands.Cog):
 
 
 async def special_commands(ctx, command, memory, registers, should_execute, memptr, splreg):
+    """
+    some special non-sm213 commands
+    """
+    
     instruction == command[0]
     if instruction == "ins":
         # instruction display mode
@@ -294,6 +298,10 @@ def reg(r):
 
 
 async def step(ctx, instruction, pc, memptr, memory, registers, execute, save, debug):
+    """
+    step through and either save instruction to memory, execute instruction, or both
+    """
+
     pcpush = 0
     bytecode = "# invalid instruction"
     try:
