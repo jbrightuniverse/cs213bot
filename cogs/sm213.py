@@ -43,7 +43,7 @@ class SM213(commands.Cog):
         Run the command and type `help` for more detailed specs.
         """
 
-        MEMORY_SIZE = 100000
+        MEMORY_SIZE = 2**16
         NUM_REGISTERS = 8
 
         # initialize main memory and primary registers
@@ -64,91 +64,108 @@ class SM213(commands.Cog):
         # some pointers
         memptr = 0
         should_execute = True
+        should_tick = False
+        instruction = []
 
         await mbed(ctx, "Discord Simple Machine 213", "**Type `help` for a commands list.**\n\nNOTE: branching commands do not currently exhibit expected behaviour. Please refrain from relying on their current characteristics for learning.")
 
         while True:
-            # wait for a message
-            message = await get(self.bot, ctx, "exit")
-            if not message: return # exit on return condition from get function
-            if message.content == "": continue # skip if blank
+            if (not should_execute or memptr == splreg["PC"]) and not should_tick:
+                # wait for a message
+                message = await get(self.bot, ctx, "exit")
+                if not message: return # exit on return condition from get function
+                if message.content == "": continue # skip if blank
 
-            commands = message.content.lower().split("\n")
-            bytecodes = []
-            working_commands = []
-            ins_found = False
+                commands = message.content.lower().split("\n")
+                bytecodes = []
+                working_commands = []
+                ins_found = False
 
-            for originalcommand in commands:
-                # extract the command, delete any comments or leading whitespace
-                command = originalcommand.lstrip().split("#")[0].split()
+                for originalcommand in commands:
+                    # extract the command, delete any comments or leading whitespace
+                    command = originalcommand.lstrip().split("#")[0].split()
 
-                # if that was a blank line or entirely comment, command is invalid
-                if len(command) == 0: 
-                    working_commands.append("# " + originalcommand)
-                    bytecodes.append("invalid instruction")
-                    continue
+                    # if that was a blank line or entirely comment, command is invalid
+                    if len(command) == 0: 
+                        working_commands.append("# " + originalcommand)
+                        bytecodes.append("invalid instruction")
+                        continue
+                    
+                    elif command[0] in ["view", "ins", "auto", "help"]:
+                        # run one of the special commands
+                        retval = await special_commands(ctx, command, memory, registers, should_execute, memptr, splreg)
+                        if command[0] == "auto": should_execute = retval
+                        # its still an invalid command
+                        working_commands.append("# " + originalcommand)
+                        bytecodes.append("invalid instruction")
+                        continue
+                    
+                    elif command[0] == "step":
+                        should_tick = True
+                        if elements_equal(instruction, get_bytes_from_ins(["halt"], memptr)):
+                            memptr += 2
+
+                    else:
+                        instruction = get_bytes_from_ins(command, memptr)
+                        memory, memptr = write_to_mem(instruction, memory, memptr)
+                        if len(bytecode := make_byte(instruction)) == 0:
+                            bytecode = "# invalid instruction"
+
+                    if bytecode != "# invalid instruction" and not should_tick: 
+                        # instruction was valid, add it directly
+                        ins_found = True
+                        working_commands.append(originalcommand)
+                        bytecodes.append(bytecode)
+
+                    else:
+                        # instruction was invalid
+                        working_commands.append("# " + originalcommand)
+                        bytecodes.append("invalid instruction")
+
+                if ins_found: 
+                    instructions = ["```avrasm"] # discord code block formatting
+                    for i in range(len(working_commands)):
+                        if i >= len(commands): break
+                        # add some formatted spacing
+                        instructions.append(working_commands[i].ljust(20) + " | " + bytecodes[i])
+
+                    await ctx.send("\n".join(instructions + ["```"]))
+            elif should_execute or should_tick:
+                # store previous instruction (empty if first instruction)
+                old_instruction = instruction
+
+                # get instruction from memory
+                instruction = read_from_mem(memory, splreg["PC"])
+
+                # check if the next two instructions are load zeros
+                load_zero = get_bytes_from_ins(["ld", "$0x0,", "r0"], memptr)
+                if elements_equal(instruction, load_zero) and elements_equal(read_from_mem(memory, splreg["PC"] + 6), load_zero):
+                    instruction = get_bytes_from_ins(["halt"], memptr)
+                    memptr = splreg["PC"]
                 
-                elif command[0] in ["view", "ins", "auto", "help"]:
-                    # run one of the special commands
-                    retval = await special_commands(ctx, command, memory, registers, should_execute, memptr, splreg)
-                    if command[0] == "auto": should_execute = retval
-                    # its still an invalid command
-                    working_commands.append("# " + originalcommand)
-                    bytecodes.append("invalid instruction")
-                    continue
+                # convert ints to a bytecode string
+                strn = ""
+                for entry in instruction:
+                    strn += hex(entry)[2:].zfill(2)
 
-                elif command[0] == "step":
-                    # determine instruction size by reading PC position
-                    if hex(memory[splreg["PC"]])[2:].zfill(2)[0] in "0b": thesize = 6
-                    else: thesize = 2
+                # retrieve the instruction from the bytecode
+                instructions, _ = bytes_to_assembly_and_bytecode(strn, splreg["PC"])
+                originalcommand = instructions[0]
 
-                    # get instruction from memory
-                    myslice = memory[splreg["PC"] : splreg["PC"] + thesize]
-                    # convert ints to a bytecode string
-                    strn = ""
-                    for entry in myslice:
-                        strn += hex(entry)[2:].zfill(2)
+                splreg["PC"] = await step(ctx, instruction, splreg["PC"], memptr, memory, registers, should_execute, debug)
+                should_tick = False
 
-                    # retrieve the instruction from the bytecode
-                    instructions, _ = get_ins_from_mem(strn, splreg["PC"])
-                    originalcommand = instructions[0] 
-
-                    # step
-                    memptr, splreg["PC"], bytecode = step(ctx, instruction, splreg["PC"], memptr, memory, registers, should_execute, False, debug)
-
-                else:
-                    # we found an instruction: convert it to bytecode
-                    instruction = get_bytes_from_ins(command, pc)
-
-                    # step
-                    memptr, splreg["PC"], bytecode = step(ctx, instruction, splreg["PC"], memptr, memory, registers, should_execute, True, debug)
-
-                if bytecode != "# invalid instruction": 
-                    # instruction was valid, add it directly
-                    ins_found = True
-                    working_commands.append(originalcommand)
-                    bytecodes.append(bytecode)
-                else:
-                    # instruction was invalid
-                    working_commands.append("# " + originalcommand)
-                    bytecodes.append("invalid instruction")
-
-            if ins_found: 
-                instructions = ["```avrasm"] # discord code block formatting
-                for i in range(len(working_commands)):
-                    if i >= len(commands): break
-                    # add some formatted spacing
-                    instructions.append(working_commands[i].ljust(20) + " | " + bytecodes[i])
-
-                await ctx.send("\n".join(instructions + ["```"]))
-
+def elements_equal(list1, list2):
+    return all(list(map(lambda x, y: x == y, list1, list2)))
 
 async def special_commands(ctx, command, memory, registers, should_execute, memptr, splreg):
     """
     some special non-sm213 commands
     """
     
-    instruction == command[0]
+    instruction = command[0]
+    operands = command[1:]
+    
     if instruction == "ins":
         # instruction display mode
         if len(command) == 1:
@@ -166,7 +183,7 @@ async def special_commands(ctx, command, memory, registers, should_execute, memp
 
             # compile the output
             instructions = ["```avrasm", "Assembly:              Bytecode:"]
-            ins, bytecode = get_ins_from_mem(strn)
+            ins, bytecode = bytes_to_assembly_and_bytecode(strn, splreg["PC"])
             instructions += ins
 
             # add bytecode
@@ -246,7 +263,7 @@ async def special_commands(ctx, command, memory, registers, should_execute, memp
                             res += char
 
                     # get signed integer value and save line
-                    val = signed(int.from_bytes(myslice[i * 4 : i * 4 + 4], 'big'))
+                    val = to_unsigned(int.from_bytes(myslice[i * 4 : i * 4 + 4], 'big'), 32)
                     lines.append(f"{num}: {a[2:].zfill(2)} {b[2:].zfill(2)} {c[2:].zfill(2)} {d[2:].zfill(2)} |{res}|  {val}")
             
             else:
@@ -262,7 +279,7 @@ async def special_commands(ctx, command, memory, registers, should_execute, memp
 
                 # display decimal and hex registers followed by special registers
                 registerx += ["Registers (dec):"]
-                regcontent = [f"r{i}: {signed(registers[i])}" for i in range(len(registers))]
+                regcontent = [f"r{i}: {to_unsigned(registers[i], 32)}" for i in range(len(registers))]
                 registerx.append(" | ".join(regcontent))
                 registerx.append("Registers (hex):")
                 regcontent = [f"r{i}: {'0x'+hex(registers[i])[2:].zfill(8)}" for i in range(len(registers))]
@@ -281,7 +298,7 @@ async def special_commands(ctx, command, memory, registers, should_execute, memp
 
                 registerx.append(f"instruction: {content}")
 
-            return await ctx.send("\n".join(lines + registerx + [f"Edit Pointer: {hex(memptr)}", f"Mode: {['Interactive', 'Text Editor'][static_mode]}", "```"]))
+            return await ctx.send("\n".join(lines + registerx + [f"Edit Pointer: {hex(memptr)}", f"Mode: {['Text Editor', 'Interactive'][should_execute]}", "```"]))
 
     # catch-all exit, return None if nothing worked
     return None
@@ -291,150 +308,167 @@ def read_num(val):
     # remove the $ from number input syntax and auto-convert to base 10
     return int(val.replace("$", ""), 0)
 
-
 def reg(r):
     # remove the r from r# register syntax
     return int(r.replace("r", ""))
 
+def split_instruction(instruction):
+    # read the instruction into an easily-accessible dict
+    pcr = {}
+    for i in range(4):
+        pcr[["insOpCode", "insOp0", "insOp1", "insOp2"][i]] = int(hex(instruction[i//2])[2:].zfill(2)[i % 2], base=16)
+    if len(instruction) != 2:
+        pcr["insOpExt"] = int(str(instruction[4]) + str(instruction[5]))
+        pcpush = 6
+    else:
+        pcr["insOpExt"] = 0
+        pcpush = 2
+    return pcr, pcpush
 
-async def step(ctx, instruction, pc, memptr, memory, registers, execute, save, debug):
+def write_to_mem(instruction, memory, memptr):
+    # write the instruction to a certain address in memory
+
+    # length of the instruction
+    length = len(instruction)
+
+    # write instruction to memory
+    memory[memptr : memptr + length] = instruction
+
+    return memory, memptr + length
+
+def read_from_mem(memory, memptr):
+    # read the instruction at a certain address in memory
+
+    # length of the instruction at the address
+    if hex(memory[memptr])[2:].zfill(2)[0] in "0b": length = 6
+    else: length = 2
+
+    # get instruction from memory
+    instruction = memory[memptr : memptr + length]
+
+    return instruction
+
+def make_byte(instruction):
+    bytecode = ""
+    for entry in instruction:
+        bytecode += hex(entry)[2:].zfill(2)
+
+    return bytecode
+
+async def step(ctx, instruction, pc, memptr, memory, registers, should_execute, debug):
     """
-    step through and either save instruction to memory, execute instruction, or both
+    step through and/or execute instruction
     """
 
-    pcpush = 0
-    bytecode = "# invalid instruction"
     try:
-        pcr = {}
-        # read the instruction into an easily-accessible dict
-        for i in range(len(instruction)):
-            pcr[["insOpCode", "insOp0", "insOp1", "insOp2", "insOpExt"][i]] = instruction[i]
+        pcr, pcpush = split_instruction(instruction) 
+        print(pc, ":", make_byte(instruction))
+        # automatic execution mode
+        # if the instruction fails, simply nothing happens
+        opcode = pcr["insOpCode"]
+        if opcode == 0:
+            # load immediate
+            registers[pcr["insOp0"]] = pcr["insOpExt"]
+        elif opcode == 1:
+            # load base + distance
+            offset = pcr["insOp0"] * 4
+            pos = registers[pcr["insOp1"]]
+            registers[pcr["insOp2"]] = int.from_bytes(memory[pos + offset : pos + offset + 4], "big")
+        elif opcode == 2:
+            # load indexed
+            base = registers[pcr["insOp0"]]
+            offset = registers[pcr["insOp1"]]
+            multiplier = 4
+            pcr["insOpImm"] = 1 # i don't really know why and this may be wrong
+            registers[pcr["insOp2"]] = int.from_bytes(memory[base + offset * multiplier : base + offset * multiplier + 4], "big")
+        elif opcode == 3:
+            # store base + distance
+            offset = pcr["insOp1"] * 4
+            pos = registers[pcr["insOp2"]]
+            memory[pos + offset : pos + offset + 4] = list(int(registers[pcr["insOp0"]]).to_bytes(4, "big"))
+        elif opcode == 4:
+            # store indexed
+            base = registers[pcr["insOp1"]]
+            offset = registers[pcr["insOp2"]]
+            multiplier = 4
+            pcr["insOpImm"] = 1 # i'm assuming store is the same as load but didn't check
+            memory[base + offset * multiplier : base + offset * multiplier + 4] = list(int(registers[pcr["insOp0"]]).to_bytes(4, "big"))
+        elif opcode == 6:
+            # register-register interactions
+            function = pcr["insOp0"]
+            if function == 0: # mov
+                registers[pcr["insOp2"]] = registers[pcr["insOp1"]]
+            elif function == 1: # add
+                registers[pcr["insOp2"]] += registers[pcr["insOp1"]]
+            elif function == 2: # and
+                registers[pcr["insOp2"]] &= registers[pcr["insOp1"]]
+            elif function == 3: # inc
+                registers[pcr["insOp2"]] += 1
+            elif function == 4: # inca
+                registers[pcr["insOp2"]] += 4
+            elif function == 5: # dec
+                registers[pcr["insOp2"]] -= 1
+            elif function == 6: # deca
+                registers[pcr["insOp2"]] -= 4
+            elif function == 7: # not
+                registers[pcr["insOp2"]] = ~ registers[pcr["insOp2"]]
+            elif function == 15: # gpc
+                registers[pcr["insOp2"]] = pc + pcr["insOp1"] * 2
 
-        if execute:
-            # automatic execution mode, switch action on bytecode 
-            # if the instruction fails, simply nothing happens
-            opcode = pcr["insOpCode"]
-            if opcode == 0:
-                # load immediate
-                registers[pcr["insOp0"]] = pcr["insOpExt"]
-            elif opcode == 1:
-                # load base + distance
-                offset = pcr["insOp0"] * 4
-                pos = registers[pcr["insOp1"]]
-                registers[pcr["insOp2"]] = int.from_bytes(memory[pos + offset : pos + offset + 4], "big")
-            elif opcode == 2:
-                # load indexed
-                base = registers[pcr["insOp0"]]
-                offset = registers[pcr["insOp1"]]
-                multiplier = 4
-                pcr["insOpImm"] = 1 # i don't really know why and this may be wrong
-                registers[pcr["insOp2"]] = int.from_bytes(memory[base + offset * multiplier : base + offset * multiplier + 4], "big")
-            elif opcode == 3:
-                # store base + distance
-                offset = pcr["insOp1"] * 4
-                pos = registers[pcr["insOp2"]]
-                memory[pos + offset : pos + offset + 4] = list(int(registers[pcr["insOp0"]]).to_bytes(4, "big"))
-            elif opcode == 4:
-                # store indexed
-                base = registers[pcr["insOp1"]]
-                offset = registers[pcr["insOp2"]]
-                multiplier = 4
-                pcr["insOpImm"] = 1 # i'm assuming store is the same as load but didn't check
-                memory[base + offset * multiplier : base + offset * multiplier + 4] = list(int(registers[pcr["insOp0"]]).to_bytes(4, "big"))
-            elif opcode == 15:
-                pass # halt and nop don't actually do anything when stepping
-            elif opcode == 6:
-                # register-register interactions
-                function = pcr["insOp0"]
-                if function == 0: # mov
-                    registers[pcr["insOp2"]] = registers[pcr["insOp1"]]
-                elif function == 1: # add
-                    registers[pcr["insOp2"]] += registers[pcr["insOp1"]]
-                elif function == 2: # and
-                    registers[pcr["insOp2"]] &= registers[pcr["insOp1"]]
-                elif function == 3: # inc
-                    registers[pcr["insOp2"]] += 1
-                elif function == 4: # inca
-                    registers[pcr["insOp2"]] += 4
-                elif function == 5: # dec
-                    registers[pcr["insOp2"]] -= 1
-                elif function == 6: # deca
-                    registers[pcr["insOp2"]] -= 4
-                elif function == 7: # not
-                    registers[pcr["insOp2"]] = ~ registers[pcr["insOp2"]]
-                elif function == 15: # gpc
-                    registers[pcr["insOp2"]] = pc + pcr["insOp1"] * 2
+        elif opcode == 7: 
+            # shifts
+            num = compile_byte(pcr["insOp1"], pcr["insOp2"])
+            pcr["insOpImm"] = num
+            if num < 128:
+                # shift left
+                registers[pcr["insOp0"]] <<= num
+            else:
+                # shift right by the negative of the signed value
+                # e.g. 255 signed is -1, which becomes a right shift of 1
+                num = 256 - num
+                registers[pcr["insOp0"]] >>= num
 
-            elif opcode == 7: 
-                # shifts
-                num = compile_byte(pcr["insOp1"], pcr["insOp2"])
-                pcr["insOpImm"] = num
-                if num < 128:
-                    # shift left
-                    registers[pcr["insOp0"]] <<= num
-                else:
-                    # shift right by the negative of the signed value
-                    # e.g. 255 signed is -1, which becomes a right shift of 1
-                    num = 256 - num
-                    registers[pcr["insOp0"]] >>= num
+        elif opcode == 8:
+            # branch
+            pp = to_unsigned(compile_byte(pcr["insOp1"], pcr["insOp2"]), 8)
+            pc = pc + pp * 2 - pcpush
 
-            elif opcode == 8:
-                # branch
-                pp = compile_byte(pcr["insOp1"], pcr["insOp2"])
-                pc = pc + pp * 2
-            elif opcode == 9:
-                # branch equals
-                pp = compile_byte(pcr["insOp1"], pcr["insOp2"])
-                if registers[pcr["insOp0"]] == 0:
-                    pc = pc + pp * 2
+        elif opcode == 9:
+            # branch equals
+            pp = to_unsigned(compile_byte(pcr["insOp1"], pcr["insOp2"]), 8)
+            if registers[pcr["insOp0"]] == 0:
+                pc = pc + pp * 2 - pcpush
 
-            elif opcode == 10:
-                # branch greater
-                pp = compile_byte(pcr["insOp1"], pcr["insOp2"])
-                if registers[pcr["insOp0"]] > 0:
-                    pc = pc + pp * 2
+        elif opcode == 10:
+            # branch greater
+            pp = to_unsigned(compile_byte(pcr["insOp1"], pcr["insOp2"]), 8)
+            if registers[pcr["insOp0"]] > 0:
+                pc = pc + pp * 2 - pcpush
 
-            elif opcode == 11:
-                # jump immediate
-                pc = pcr["insOpExt"]
-            elif opcode == 12:
-                # jump base + distance
-                pp = compile_byte(pcr["insOp1"], pcr["insOp2"])
-                pc = registers[pcr["insOp0"]] + pp * 2
-            elif opcode == 13:
-                # jump indirect base + distance
-                pp = compile_byte(pcr["insOp1"], pcr["insOp2"])
-                pc = memory[registers[pcr["insOp0"]] + pp * 4]
-            elif opcode == 14:
-                # jump indirect indexed
-                pc = memory[registers[pcr["insOp0"]] + registers[pcr["insOp1"]] * 4]
-        
-        # compress the instruction hexits into condensed bytes
-        hex1 = hex(pcr["insOpCode"])[2:] + hex(pcr["insOp0"])[2:]
-        hex2 = hex(pcr["insOp1"])[2:] + hex(pcr["insOp2"])[2:]
+        elif opcode == 11:
+            # jump immediate
+            pc = pcr["insOpExt"] - pcpush
 
-        # determine the size of the instruction
-        is_big = pcr["insOpCode"] in [0, 11]
+        elif opcode == 12:
+            # jump base + distance
+            pp = compile_byte(pcr["insOp1"], pcr["insOp2"])
+            pc = registers[pcr["insOp0"]] + pp * 2 - pcpush
 
-        # construct the condensed bytecode string
-        myslice = [int(hex1, 16), int(hex2, 16)] + [[], list(int(pcr["insOpExt"]).to_bytes(4, "big"))][is_big]
+        elif opcode == 13:
+            # jump indirect base + distance
+            pp = compile_byte(pcr["insOp1"], pcr["insOp2"])
+            pc = memory[registers[pcr["insOp0"]] + pp * 4] - pcpush
 
-        # get the actual instruction size
-        pcpush = [2, 6][is_big]
+        elif opcode == 14:
+            # jump indirect indexed
+            pc = memory[registers[pcr["insOp0"]] + registers[pcr["insOp1"]] * 4] - pcpush
 
-        if save:
-            # save to memory if we need to
-            memory[memptr : memptr + pcpush] = myslice
-            memptr += pcpush # progress the memory-writing pointer
+        elif opcode == 15 and pcr["insOp0"] == 0:
+            # halt
+            if should_execute:
+                pc -= pcpush
 
-        if execute:
-            # progress the program counter
-            pc += pcpush
-
-        bytecode = ""
-        for entry in myslice:
-            # re-create a bytecode string from memory; this is out of laziness
-            bytecode += hex(entry)[2:].zfill(2)
+        pc += pcpush
 
     except Exception as e:
         if debug:
@@ -446,21 +480,42 @@ async def step(ctx, instruction, pc, memptr, memory, registers, execute, save, d
             # basic formatting
             await ctx.send("ERROR: " + str(e))
 
-    return memptr, pc, bytecode
+    return pc
 
-
-def signed(val):
+def to_unsigned(val, size):
     """
-    convert an unsigned integer to a signed integer; meant for 4 byte integers
+    converts val into a unsigned binary in decimal
     """
+    mx = 2**size
+    mi = (mx - 1) // 2
 
-    if val > 2147483647: 
-        val = -1 * (4294967296 - val)
+    if val > mx:
+        raise Exception(f"to_unsigned(): value to large for size. max value for size is {mx}.")
+
+    if val > mi:
+        val = -(mx - val)
 
     return val
 
+    
+def to_signed(val, size):
+    """
+    converts val into a signed binary in decimal
+    """
+    mx = (2**size - 1) // 2
+    mn = mx + 1
+    
+    if val > mx // 2:
+        raise Exception(f"to_signed(): value to large for size. max value for size is {mx}.")
+    elif val > mn:
+        raise Exception(f"to_signed(): value to small for size. min value for size is {mn}.")
 
-def get_bytes_from_ins(command, pc):
+    if val < 0:
+        val += 2**size
+
+    return val
+
+def get_bytes_from_ins(command, memptr):
     """
     given an sm213 instruction, returns the bytecode as a list of bytes
     """
@@ -476,7 +531,7 @@ def get_bytes_from_ins(command, pc):
         if len(operands) == 2 and "(" not in operands[0]:
             # load immediate: 0d--vvvvvvvv 
             # e.g. ld $0x100, r0
-            return compress_bytes(0, reg(operands[1]), 0, 0, value)
+            return compress_bytes(0, reg(operands[1]), 0, 0, read_num(operands[0]))
             
         elif len(operands) == 2 and "(" in operands[0] and operands[0][-1] == ")":
             # load base + distance: 1psd
@@ -571,28 +626,21 @@ def get_bytes_from_ins(command, pc):
     elif instruction == "br" and len(operands) == 1:
         # branch: 8-pp
         # e.g. br 0x1000
-        pp = (read_num(operands[0]) - pc)//2
-        if pp < 0:
-            pp = (~pp + 1) & 0xff
+        pp = to_signed((read_num(operands[0]) - memptr)//2, 8)
         op1, op2 = get_hexits(pp)
         return compress_bytes(8, 0, op1, op2)
 
     elif instruction == "beq" and len(operands) == 2:
         # branch if equal: 9spp
         # e.g. beq r0, 0x1000
-        pp = (read_num(operands[1]) - pc)//2
-        if pp < 0:
-            pp = (~pp + 1) & 0xff
+        pp = to_signed((read_num(operands[1]) - memptr)//2, 8)
         op1, op2 = get_hexits(pp)
         return compress_bytes(9, reg(operands[0]), op1, op2)
 
     elif instruction == "bgt" and len(operands) == 2:
         # branch if greater: Aspp
         # e.g. bgt r0, 0x1000
-        pp = (read_num(operands[1]) - pc)//2
-        if pp < 0:
-            pp = (~pp + 1) & 0xff
-        op1, op2 = get_hexits(pp)
+        pp = to_signed((read_num(operands[1]) - memptr)//2, 8)
         return compress_bytes(10, reg(operands[0]), op1, op2)
 
     elif instruction == "gpc" and len(operands) == 2:
@@ -686,8 +734,8 @@ def compress_bytes(opcode, op0, op1, op2, value = None):
     # convert integer values to compressed hex
     # this takes the hex values (guaranteed to be single character as each input is a single hexit), without the 0x, 
     # and puts them side by side
-    hex1 = hex(special["insOpCode"])[2:] + hex(special["insOp0"])[2:]
-    hex2 = hex(special["insOp1"])[2:] + hex(special["insOp2"])[2:]
+    hex1 = hex(opcode)[2:] + hex(op0)[2:]
+    hex2 = hex(op1)[2:] + hex(op2)[2:]
 
     # start array
     myslice = [int(hex1, 16), int(hex2, 16)]
@@ -698,7 +746,7 @@ def compress_bytes(opcode, op0, op1, op2, value = None):
     return myslice
 
 
-def get_ins_from_bytes(strn, pc):
+def bytes_to_assembly(strn, pc):
     """
     given a string of hex bytes, return the sm213 instruction string
     """
@@ -713,7 +761,7 @@ def get_ins_from_bytes(strn, pc):
 
     elif opcode == "1":
         # load base + distance
-        return f"ld {int(strn[1], 16) * 4}(r{strn[2]}), r{strn[3]}
+        return f"ld {int(strn[1], 16) * 4}(r{strn[2]}), r{strn[3]}"
 
     elif opcode == "2":
         # load indexed
@@ -809,7 +857,7 @@ def get_ins_from_bytes(strn, pc):
     return "# invalid instruction"
 
 
-def get_ins_from_mem(strn, pc):
+def bytes_to_assembly_and_bytecode(strn, pc):
     """
     given a string of bytes from memory, reads off the bytes into a list of sm213 instructions and bytecodes
     """
@@ -823,7 +871,7 @@ def get_ins_from_mem(strn, pc):
         length = [4, 12][strn[counter] in "0b"]
         instruction = strn[counter:counter+length]
         # find the instruction
-        instructions.append(get_ins_from_bytes(instruction, pc))
+        instructions.append(bytes_to_assembly(instruction, pc))
         bytecode.append(instruction)
         # go to the next instruction
         counter += length
