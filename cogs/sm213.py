@@ -29,7 +29,7 @@ class SM213(commands.Cog):
 
     @commands.command()
     @commands.cooldown(1, 5, commands.BucketType.user)
-    async def sim(self, ctx, debug = True):
+    async def sim(self, ctx, debug = None):
         """
         `!sim` __`Launch SM213 simulator`__
 
@@ -43,7 +43,7 @@ class SM213(commands.Cog):
         Run the command and type `help` for more detailed specs.
         """
 
-        MEMORY_SIZE = 128
+        MEMORY_SIZE = 2**16
         NUM_REGISTERS = 8
 
         # initialize main memory and primary registers
