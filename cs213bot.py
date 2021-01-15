@@ -16,7 +16,7 @@ from util.badargs import BadArgs
 from util.create_file import create_file_if_not_exists
 
 load_dotenv()
-CS213BOT_KEY = os.getenv("CS213BOT_KEY")
+CS213BOT_KEY = "Nzk5MzI5MzUwMTcyMTQ3NzIz.YAB_dw.NYiJrMEdtSLG_iAqmUxjB2YB_f4"
 
 bot = commands.Bot(command_prefix="!", help_command=None, intents=discord.Intents.all())
 
