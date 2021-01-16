@@ -70,6 +70,7 @@ class SM213(commands.Cog):
         await mbed(ctx, "Discord Simple Machine 213", "**Type `help` for a commands list.**\n\nNOTE: branching commands do not currently exhibit expected behaviour. Please refrain from relying on their current characteristics for learning.")
 
         while True:
+            await asyncio.sleep(0)
             if (not should_execute or memptr == splreg["PC"]) and not should_tick:
                 # wait for a message
                 message = await get(self.bot, ctx, "exit")
