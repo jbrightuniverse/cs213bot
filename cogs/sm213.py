@@ -243,7 +243,7 @@ async def special_commands(ctx, command, memory, registers, should_execute, memp
         specialx += "`step`\nManually executes the instruction at the current location of the Program Counter (PC). Increments PC accordingly.\n\n"
         specialx += "`help`\nViews this message."
         fields.append([":sparkles: Special Commands\n_ _", specialx])
-        return await mbed(ctx, "Discord Simple Machine Docs", "This assumes you have at least some knowledge of the sm213 language. If you don't, please review the language first before continuing.", fields = fields, footer = "Credits:\n\nThe sm213 language was created by Dr. Mike Feeley of the CPSC department at UBCV.\nUsed with permission.\n\nDiscord Simple Machine created by James Yu with feedback from users and friends.\nLoosely inspired by the functionality of the Java Simple Machine 213\nand the web 213/313 simulator.\n\nSignificant upgrades by https://github.com/ethanthoma\n")
+        return await mbed(ctx, "Discord Simple Machine Docs", "This assumes you have at least some knowledge of the sm213 language. If you don't, please review the language first before continuing.", fields = fields, footer = "Credits:\n\nThe sm213 language was created by Dr. Mike Feeley of the CPSC department at UBCV.\nUsed with permission.\n\nDiscord Simple Machine created by James Yu with feedback from users and friends.\nLoosely inspired by the functionality of the Java Simple Machine 213\nand the web 213/313 simulator.\nSignificant upgrades by https://github.com/ethanthoma\nSpeed optimizations by https://github.com/Kieran-Weaver")
 
     elif instruction == "auto":
         # switch between modes
