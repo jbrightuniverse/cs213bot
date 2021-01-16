@@ -362,7 +362,6 @@ async def step(ctx, instruction, pc, memptr, memory, registers, should_execute, 
 
     try:
         pcr, pcpush = split_instruction(instruction) 
-        print(pc, ":", make_byte(instruction))
         # automatic execution mode
         # if the instruction fails, simply nothing happens
         opcode = pcr["insOpCode"]
