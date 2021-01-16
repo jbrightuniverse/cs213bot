@@ -3,6 +3,7 @@ import numpy as np
 import os
 import random
 import traceback
+import time
 
 import discord
 from discord.ext import commands
@@ -67,6 +68,12 @@ class SM213(commands.Cog):
         should_tick = False
         instruction = []
 
+        # time check variables
+        start_time = 0
+        current_time = 0
+        should_ping_time = False
+        sent_ping = False
+
         await mbed(ctx, "Discord Simple Machine 213", "**Type `help` for a commands list.**\n\nNOTE: branching commands do not currently exhibit expected behaviour. Please refrain from relying on their current characteristics for learning.")
 
         ticker = 0
@@ -75,6 +82,11 @@ class SM213(commands.Cog):
                 await asyncio.sleep(0)
             ticker += 1
             if (not should_execute or memptr == splreg["PC"]) and not should_tick:
+                # check if last execution has finished and a ping was sent
+                if sent_ping:
+                    await ctx.send("```Execution finished```")
+                    sent_ping = False
+
                 # wait for a message
                 message = await get(self.bot, ctx, "exit")
                 if not message: return # exit on return condition from get function
@@ -115,6 +127,9 @@ class SM213(commands.Cog):
                         if len(bytecode := make_byte(instruction)) == 0:
                             bytecode = "# invalid instruction"
 
+                        start_time = time.time()
+                        should_ping_time = True
+
                     if bytecode != "# invalid instruction" and not should_tick: 
                         # instruction was valid, add it directly
                         ins_found = True
@@ -135,6 +150,12 @@ class SM213(commands.Cog):
 
                     await ctx.send("\n".join(instructions + ["```"]))
             elif should_execute or should_tick:
+                # ping if the execution is taking awhile
+                if should_ping_time and current_time > start_time + 1:
+                    await ctx.send("```Execution still in progress, please wait...```")
+                    should_ping_time = False
+                    sent_ping = True
+
                 # store previous instruction (empty if first instruction)
                 old_instruction = instruction
 
@@ -169,6 +190,7 @@ class SM213(commands.Cog):
                         await ctx.send("ERROR: " + str(e))
 
                 should_tick = False
+                current_time = time.time()
 
 def elements_equal(list1, list2):
     return all(list(map(lambda x, y: x == y, list1, list2)))
@@ -333,7 +355,7 @@ def split_instruction(instruction):
     for i in range(4):
         pcr[["insOpCode", "insOp0", "insOp1", "insOp2"][i]] = int(hex(instruction[i//2])[2:].zfill(2)[i % 2], base=16)
     if len(instruction) != 2:
-        pcr["insOpExt"] = int(str(instruction[4]) + str(instruction[5]))
+        pcr["insOpExt"] = int(hex(instruction[4])[2:].zfill(2) + hex(instruction[5])[2:].zfill(2), 16)
         pcpush = 6
     else:
         pcr["insOpExt"] = 0
@@ -374,6 +396,7 @@ def step(instruction, splreg, memptr, memory, registers, should_execute, debug):
     """
     step through and/or execute instruction
     """
+
     pc = splreg["PC"]
     pcr, pcpush = split_instruction(instruction) 
     for key in pcr:
@@ -466,12 +489,12 @@ def step(instruction, splreg, memptr, memory, registers, should_execute, debug):
 
     elif opcode == 12:
         # jump base + distance
-        pp = compile_byte(pcr["insOp1"], pcr["insOp2"])
+        pp = to_unsigned(compile_byte(pcr["insOp1"], pcr["insOp2"]))
         pc = registers[pcr["insOp0"]] + pp * 2 - pcpush
 
     elif opcode == 13:
         # jump indirect base + distance
-        pp = compile_byte(pcr["insOp1"], pcr["insOp2"])
+        pp = to_unsigned(compile_byte(pcr["insOp1"], pcr["insOp2"]))
         pc = memory[registers[pcr["insOp0"]] + pp * 4] - pcpush
 
     elif opcode == 14:
