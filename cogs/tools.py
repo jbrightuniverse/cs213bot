@@ -111,7 +111,7 @@ class Tools(commands.Cog):
             number = random.randint(0, 65535)
             await ctx.send(f"QUESTION: Convert {hex(number)} to base 10.")
             res = await get(ctx, self.bot, who = True)
-            if res != number:
+            if res != str(number):
                 return await ctx.send(f"False. {hex(number)} is {number} in base 10.")
             else:
                 return await ctx.send("Correct!")
