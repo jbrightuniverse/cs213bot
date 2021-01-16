@@ -44,7 +44,7 @@ class SM213(commands.Cog):
         Run the command and type `help` for more detailed specs.
         """
 
-        MEMORY_SIZE = 128
+        MEMORY_SIZE = 2**16
         NUM_REGISTERS = 8
 
         # initialize main memory and primary registers
