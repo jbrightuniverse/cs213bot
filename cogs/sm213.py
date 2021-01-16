@@ -71,7 +71,6 @@ class SM213(commands.Cog):
 
         while True:
             await asyncio.sleep(0)
-            #print(memptr, splreg["PC"])
             if (not should_execute or memptr == splreg["PC"]) and not should_tick:
                 # wait for a message
                 message = await get(self.bot, ctx, "exit")
@@ -154,7 +153,7 @@ class SM213(commands.Cog):
                 instructions, _ = bytes_to_assembly_and_bytecode(strn, splreg["PC"])
                 originalcommand = instructions[0]
 
-                splreg["PC"] = await step(ctx, instruction, splreg["PC"], memptr, memory, registers, should_execute, debug)
+                await step(ctx, instruction, splreg, memptr, memory, registers, should_execute, debug)
                 should_tick = False
 
 def elements_equal(list1, list2):
@@ -357,13 +356,15 @@ def make_byte(instruction):
 
     return bytecode
 
-async def step(ctx, instruction, pc, memptr, memory, registers, should_execute, debug):
+async def step(ctx, instruction, splreg, memptr, memory, registers, should_execute, debug):
     """
     step through and/or execute instruction
     """
-
+    pc = splreg["PC"]
     try:
         pcr, pcpush = split_instruction(instruction) 
+        for key in pcr:
+            splreg[key] = pcr[key]
         # automatic execution mode
         # if the instruction fails, simply nothing happens
         opcode = pcr["insOpCode"]
@@ -465,9 +466,10 @@ async def step(ctx, instruction, pc, memptr, memory, registers, should_execute, 
             pc = memory[registers[pcr["insOp0"]] + registers[pcr["insOp1"]] * 4] - pcpush
 
         elif opcode == 15 and pcr["insOp0"] == 0:
+            pass
             # halt
-            if should_execute:
-                pc -= pcpush
+            #if should_execute:
+            #    pc -= pcpush
 
         pc += pcpush
 
@@ -481,7 +483,7 @@ async def step(ctx, instruction, pc, memptr, memory, registers, should_execute, 
             # basic formatting
             await ctx.send("ERROR: " + str(e))
 
-    return pc
+    splreg["PC"] = pc
 
 def to_unsigned(val, size):
     """
