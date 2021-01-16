@@ -69,8 +69,11 @@ class SM213(commands.Cog):
 
         await mbed(ctx, "Discord Simple Machine 213", "**Type `help` for a commands list.**\n\nNOTE: branching commands do not currently exhibit expected behaviour. Please refrain from relying on their current characteristics for learning.")
 
+        ticker = 0
         while True:
-            await asyncio.sleep(0)
+            if ticker % 256 == 0:
+                await asyncio.sleep(0)
+            ticker += 1
             if (not should_execute or memptr == splreg["PC"]) and not should_tick:
                 # wait for a message
                 message = await get(self.bot, ctx, "exit")
@@ -153,7 +156,18 @@ class SM213(commands.Cog):
                 instructions, _ = bytes_to_assembly_and_bytecode(strn, splreg["PC"])
                 originalcommand = instructions[0]
 
-                await step(ctx, instruction, splreg, memptr, memory, registers, should_execute, debug)
+                try:
+                    step(instruction, splreg, memptr, memory, registers, should_execute, debug)
+                except Exception as e:
+                    if debug:
+                        # print a nicely formatted thing
+                        etype = type(e)
+                        trace = e.__traceback__
+                        await ctx.send(("```python\n" + "".join(traceback.format_exception(etype, e, trace, 999)) + "```").replace("home/rq2/.local/lib/python3.9/site-packages/", "").replace("/home/rq2/cs213bot/cs213bot/", ""))
+                    else: 
+                        # basic formatting
+                        await ctx.send("ERROR: " + str(e))
+
                 should_tick = False
 
 def elements_equal(list1, list2):
@@ -356,133 +370,121 @@ def make_byte(instruction):
 
     return bytecode
 
-async def step(ctx, instruction, splreg, memptr, memory, registers, should_execute, debug):
+def step(instruction, splreg, memptr, memory, registers, should_execute, debug):
     """
     step through and/or execute instruction
     """
     pc = splreg["PC"]
-    try:
-        pcr, pcpush = split_instruction(instruction) 
-        for key in pcr:
-            splreg[key] = pcr[key]
-        # automatic execution mode
-        # if the instruction fails, simply nothing happens
-        opcode = pcr["insOpCode"]
-        if opcode == 0:
-            # load immediate
-            registers[pcr["insOp0"]] = pcr["insOpExt"]
-        elif opcode == 1:
-            # load base + distance
-            offset = pcr["insOp0"] * 4
-            pos = registers[pcr["insOp1"]]
-            registers[pcr["insOp2"]] = int.from_bytes(memory[pos + offset : pos + offset + 4], "big")
-        elif opcode == 2:
-            # load indexed
-            base = registers[pcr["insOp0"]]
-            offset = registers[pcr["insOp1"]]
-            multiplier = 4
-            pcr["insOpImm"] = 1 # i don't really know why and this may be wrong
-            registers[pcr["insOp2"]] = int.from_bytes(memory[base + offset * multiplier : base + offset * multiplier + 4], "big")
-        elif opcode == 3:
-            # store base + distance
-            offset = pcr["insOp1"] * 4
-            pos = registers[pcr["insOp2"]]
-            memory[pos + offset : pos + offset + 4] = list(int(registers[pcr["insOp0"]]).to_bytes(4, "big"))
-        elif opcode == 4:
-            # store indexed
-            base = registers[pcr["insOp1"]]
-            offset = registers[pcr["insOp2"]]
-            multiplier = 4
-            pcr["insOpImm"] = 1 # i'm assuming store is the same as load but didn't check
-            memory[base + offset * multiplier : base + offset * multiplier + 4] = list(int(registers[pcr["insOp0"]]).to_bytes(4, "big"))
-        elif opcode == 6:
-            # register-register interactions
-            function = pcr["insOp0"]
-            if function == 0: # mov
-                registers[pcr["insOp2"]] = registers[pcr["insOp1"]]
-            elif function == 1: # add
-                registers[pcr["insOp2"]] += registers[pcr["insOp1"]]
-            elif function == 2: # and
-                registers[pcr["insOp2"]] &= registers[pcr["insOp1"]]
-            elif function == 3: # inc
-                registers[pcr["insOp2"]] += 1
-            elif function == 4: # inca
-                registers[pcr["insOp2"]] += 4
-            elif function == 5: # dec
-                registers[pcr["insOp2"]] -= 1
-            elif function == 6: # deca
-                registers[pcr["insOp2"]] -= 4
-            elif function == 7: # not
-                registers[pcr["insOp2"]] = ~ registers[pcr["insOp2"]]
-            elif function == 15: # gpc
-                registers[pcr["insOp2"]] = pc + pcr["insOp1"] * 2
+    pcr, pcpush = split_instruction(instruction) 
+    for key in pcr:
+        splreg[key] = pcr[key]
+    # automatic execution mode
+    # if the instruction fails, simply nothing happens
+    opcode = pcr["insOpCode"]
+    if opcode == 0:
+        # load immediate
+        registers[pcr["insOp0"]] = pcr["insOpExt"]
+    elif opcode == 1:
+        # load base + distance
+        offset = pcr["insOp0"] * 4
+        pos = registers[pcr["insOp1"]]
+        registers[pcr["insOp2"]] = int.from_bytes(memory[pos + offset : pos + offset + 4], "big")
+    elif opcode == 2:
+        # load indexed
+        base = registers[pcr["insOp0"]]
+        offset = registers[pcr["insOp1"]]
+        multiplier = 4
+        pcr["insOpImm"] = 1 # i don't really know why and this may be wrong
+        registers[pcr["insOp2"]] = int.from_bytes(memory[base + offset * multiplier : base + offset * multiplier + 4], "big")
+    elif opcode == 3:
+        # store base + distance
+        offset = pcr["insOp1"] * 4
+        pos = registers[pcr["insOp2"]]
+        memory[pos + offset : pos + offset + 4] = list(int(registers[pcr["insOp0"]]).to_bytes(4, "big"))
+    elif opcode == 4:
+        # store indexed
+        base = registers[pcr["insOp1"]]
+        offset = registers[pcr["insOp2"]]
+        multiplier = 4
+        pcr["insOpImm"] = 1 # i'm assuming store is the same as load but didn't check
+        memory[base + offset * multiplier : base + offset * multiplier + 4] = list(int(registers[pcr["insOp0"]]).to_bytes(4, "big"))
+    elif opcode == 6:
+        # register-register interactions
+        function = pcr["insOp0"]
+        if function == 0: # mov
+            registers[pcr["insOp2"]] = registers[pcr["insOp1"]]
+        elif function == 1: # add
+            registers[pcr["insOp2"]] += registers[pcr["insOp1"]]
+        elif function == 2: # and
+            registers[pcr["insOp2"]] &= registers[pcr["insOp1"]]
+        elif function == 3: # inc
+            registers[pcr["insOp2"]] += 1
+        elif function == 4: # inca
+            registers[pcr["insOp2"]] += 4
+        elif function == 5: # dec
+            registers[pcr["insOp2"]] -= 1
+        elif function == 6: # deca
+            registers[pcr["insOp2"]] -= 4
+        elif function == 7: # not
+            registers[pcr["insOp2"]] = ~ registers[pcr["insOp2"]]
+        elif function == 15: # gpc
+            registers[pcr["insOp2"]] = pc + pcr["insOp1"] * 2
 
-        elif opcode == 7: 
-            # shifts
-            num = compile_byte(pcr["insOp1"], pcr["insOp2"])
-            pcr["insOpImm"] = num
-            if num < 128:
-                # shift left
-                registers[pcr["insOp0"]] <<= num
-            else:
-                # shift right by the negative of the signed value
-                # e.g. 255 signed is -1, which becomes a right shift of 1
-                num = 256 - num
-                registers[pcr["insOp0"]] >>= num
+    elif opcode == 7: 
+        # shifts
+        num = compile_byte(pcr["insOp1"], pcr["insOp2"])
+        pcr["insOpImm"] = num
+        if num < 128:
+            # shift left
+            registers[pcr["insOp0"]] <<= num
+        else:
+            # shift right by the negative of the signed value
+            # e.g. 255 signed is -1, which becomes a right shift of 1
+            num = 256 - num
+            registers[pcr["insOp0"]] >>= num
 
-        elif opcode == 8:
-            # branch
-            pp = to_unsigned(compile_byte(pcr["insOp1"], pcr["insOp2"]), 8)
+    elif opcode == 8:
+        # branch
+        pp = to_unsigned(compile_byte(pcr["insOp1"], pcr["insOp2"]), 8)
+        pc = pc + pp * 2 - pcpush
+
+    elif opcode == 9:
+        # branch equals
+        pp = to_unsigned(compile_byte(pcr["insOp1"], pcr["insOp2"]), 8)
+        if registers[pcr["insOp0"]] == 0:
             pc = pc + pp * 2 - pcpush
 
-        elif opcode == 9:
-            # branch equals
-            pp = to_unsigned(compile_byte(pcr["insOp1"], pcr["insOp2"]), 8)
-            if registers[pcr["insOp0"]] == 0:
-                pc = pc + pp * 2 - pcpush
+    elif opcode == 10:
+        # branch greater
+        pp = to_unsigned(compile_byte(pcr["insOp1"], pcr["insOp2"]), 8)
+        if registers[pcr["insOp0"]] > 0:
+            pc = pc + pp * 2 - pcpush
 
-        elif opcode == 10:
-            # branch greater
-            pp = to_unsigned(compile_byte(pcr["insOp1"], pcr["insOp2"]), 8)
-            if registers[pcr["insOp0"]] > 0:
-                pc = pc + pp * 2 - pcpush
+    elif opcode == 11:
+        # jump immediate
+        pc = pcr["insOpExt"] - pcpush
 
-        elif opcode == 11:
-            # jump immediate
-            pc = pcr["insOpExt"] - pcpush
+    elif opcode == 12:
+        # jump base + distance
+        pp = compile_byte(pcr["insOp1"], pcr["insOp2"])
+        pc = registers[pcr["insOp0"]] + pp * 2 - pcpush
 
-        elif opcode == 12:
-            # jump base + distance
-            pp = compile_byte(pcr["insOp1"], pcr["insOp2"])
-            pc = registers[pcr["insOp0"]] + pp * 2 - pcpush
+    elif opcode == 13:
+        # jump indirect base + distance
+        pp = compile_byte(pcr["insOp1"], pcr["insOp2"])
+        pc = memory[registers[pcr["insOp0"]] + pp * 4] - pcpush
 
-        elif opcode == 13:
-            # jump indirect base + distance
-            pp = compile_byte(pcr["insOp1"], pcr["insOp2"])
-            pc = memory[registers[pcr["insOp0"]] + pp * 4] - pcpush
+    elif opcode == 14:
+        # jump indirect indexed
+        pc = memory[registers[pcr["insOp0"]] + registers[pcr["insOp1"]] * 4] - pcpush
 
-        elif opcode == 14:
-            # jump indirect indexed
-            pc = memory[registers[pcr["insOp0"]] + registers[pcr["insOp1"]] * 4] - pcpush
+    elif opcode == 15 and pcr["insOp0"] == 0:
+        pass
+        # halt
+        #if should_execute:
+        #    pc -= pcpush
 
-        elif opcode == 15 and pcr["insOp0"] == 0:
-            pass
-            # halt
-            #if should_execute:
-            #    pc -= pcpush
-
-        pc += pcpush
-
-    except Exception as e:
-        if debug:
-            # print a nicely formatted thing
-            etype = type(e)
-            trace = e.__traceback__
-            await ctx.send(("```python\n" + "".join(traceback.format_exception(etype, e, trace, 999)) + "```").replace("home/rq2/.local/lib/python3.9/site-packages/", "").replace("/home/rq2/cs213bot/cs213bot/", ""))
-        else: 
-            # basic formatting
-            await ctx.send("ERROR: " + str(e))
-
+    pc += pcpush
     splreg["PC"] = pc
 
 def to_unsigned(val, size):
