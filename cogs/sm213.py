@@ -4,6 +4,7 @@ import os
 import random
 import traceback
 import time
+import binascii
 
 import discord
 from discord.ext import commands
@@ -11,7 +12,6 @@ from discord.ext import commands
 class SM213(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-
 
     @commands.command()
     @commands.is_owner()
@@ -67,6 +67,7 @@ class SM213(commands.Cog):
         should_execute = True
         should_tick = False
         instruction = []
+        icache = {}
 
         # time check variables
         start_time = 0
@@ -82,6 +83,7 @@ class SM213(commands.Cog):
                 await asyncio.sleep(0)
             ticker += 1
             if (not should_execute or memptr == splreg["PC"]) and not should_tick:
+                icache = {}
                 # check if last execution has finished and a ping was sent
                 if sent_ping:
                     await ctx.send("```Execution finished```")
@@ -163,22 +165,19 @@ class SM213(commands.Cog):
                 instruction = read_from_mem(memory, splreg["PC"])
 
                 # check if the next two instructions are load zeros
-                load_zero = [0, 0, 0, 0, 0, 0] # ld $0, r0
-                if elements_equal(instruction, load_zero) and elements_equal(read_from_mem(memory, splreg["PC"] + 6), load_zero):
-                    instruction = [15, 0] # halt
+                if not any(memory[splreg["PC"]:splreg["PC"] + 12]):
+                    instruction = [0xF0, 0] # halt
                     memptr = splreg["PC"]
                 
                 # convert ints to a bytecode string
-                strn = ""
-                for entry in instruction:
-                    strn += hex(entry)[2:].zfill(2)
+                strn = make_byte(instruction)
 
                 # retrieve the instruction from the bytecode
                 instructions, _ = bytes_to_assembly_and_bytecode(strn, splreg["PC"])
                 originalcommand = instructions[0]
 
                 try:
-                    step(instruction, splreg, memptr, memory, registers, should_execute, debug)
+                    step(instruction, icache, splreg, memptr, memory, registers, should_execute, debug)
                 except Exception as e:
                     if debug:
                         # print a nicely formatted thing
@@ -191,6 +190,8 @@ class SM213(commands.Cog):
 
                 should_tick = False
                 current_time = time.time()
+            else:
+                icache = {}
 
 def elements_equal(list1, list2):
     return all(list(map(lambda x, y: x == y, list1, list2)))
@@ -355,7 +356,7 @@ def split_instruction(instruction):
     for i in range(4):
         pcr[["insOpCode", "insOp0", "insOp1", "insOp2"][i]] = int(hex(instruction[i//2])[2:].zfill(2)[i % 2], base=16)
     if len(instruction) != 2:
-        pcr["insOpExt"] = int(hex(instruction[4])[2:].zfill(2) + hex(instruction[5])[2:].zfill(2), 16)
+        pcr["insOpExt"] = sum([instruction[5-k]*(256**k) for k in range(4)])
         pcpush = 6
     else:
         pcr["insOpExt"] = 0
@@ -377,8 +378,8 @@ def read_from_mem(memory, memptr):
     # read the instruction at a certain address in memory
 
     # length of the instruction at the address
-    if hex(memory[memptr])[2:].zfill(2)[0] in "0b": length = 6
-    else: length = 2
+    length = 2
+    if (memory[memptr] & 0xF0) in [0, 0xB0]: length = 6
 
     # get instruction from memory
     instruction = memory[memptr : memptr + length]
@@ -386,19 +387,22 @@ def read_from_mem(memory, memptr):
     return instruction
 
 def make_byte(instruction):
-    bytecode = ""
-    for entry in instruction:
-        bytecode += hex(entry)[2:].zfill(2)
+    return binascii.hexlify(bytes(instruction)).decode("utf-8")
 
-    return bytecode
-
-def step(instruction, splreg, memptr, memory, registers, should_execute, debug):
+def step(instruction, icache, splreg, memptr, memory, registers, should_execute, debug):
     """
     step through and/or execute instruction
     """
 
     pc = splreg["PC"]
-    pcr, pcpush = split_instruction(instruction) 
+    pcr = {}
+    pcpush = 0
+    if pc not in icache:
+        pcr, pcpush = split_instruction(instruction) 
+        icache[pc] = (pcr, pcpush)
+    else:
+        pcr, pcpush = icache[pc]
+
     for key in pcr:
         splreg[key] = pcr[key]
     # automatic execution mode
@@ -729,12 +733,8 @@ def compile_byte(val1, val2):
     converts a pair of hexits into a byte
     """
 
-    # convert hexits to hex and remove the 0x
-    merged_hexits = hex(val1)[2:] + hex(val2)[2:]
-
-    # get integer back
-    return int(merged_hexits, 16)
-
+    # Multiply by 16
+    return val1 * 16 + val2
 
 def get_offset_reg(operand):
     """
