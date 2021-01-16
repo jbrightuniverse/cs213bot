@@ -71,6 +71,7 @@ class SM213(commands.Cog):
 
         while True:
             await asyncio.sleep(0)
+            #print(memptr, splreg["PC"])
             if (not should_execute or memptr == splreg["PC"]) and not should_tick:
                 # wait for a message
                 message = await get(self.bot, ctx, "exit")
@@ -139,9 +140,9 @@ class SM213(commands.Cog):
                 instruction = read_from_mem(memory, splreg["PC"])
 
                 # check if the next two instructions are load zeros
-                load_zero = get_bytes_from_ins(["ld", "$0x0,", "r0"], memptr)
+                load_zero = [0, 0, 0, 0, 0, 0] # ld $0, r0
                 if elements_equal(instruction, load_zero) and elements_equal(read_from_mem(memory, splreg["PC"] + 6), load_zero):
-                    instruction = get_bytes_from_ins(["halt"], memptr)
+                    instruction = [15, 0] # halt
                     memptr = splreg["PC"]
                 
                 # convert ints to a bytecode string
@@ -739,7 +740,7 @@ def compress_bytes(opcode, op0, op1, op2, value = None):
 
     # start array
     myslice = [int(hex1, 16), int(hex2, 16)]
-    if value:
+    if value != None: # account for zero
         # add bytecode extension if large immediate value present
         myslice += list(int(value).to_bytes(4, "big"))
     
