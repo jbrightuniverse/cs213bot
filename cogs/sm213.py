@@ -54,6 +54,7 @@ class SM213(commands.Cog):
         # special registers for instruction feedback
         splreg = {
             "PC": 0,
+            "LASTPC": 0,
             "insOpCode": 0,
             "insOp0": 0,
             "insOp1": 0,
@@ -75,7 +76,7 @@ class SM213(commands.Cog):
         should_ping_time = False
         sent_ping = False
 
-        await mbed(ctx, "Discord Simple Machine 213", "**Type `help` for a commands list.**\n\nNOTE: branching commands do not currently exhibit expected behaviour. Please refrain from relying on their current characteristics for learning.")
+        await mbed(ctx, "Discord Simple Machine 213", "**Type `help` for a commands list.**")
 
         ticker = 0
         num_steps = 1
@@ -124,6 +125,11 @@ class SM213(commands.Cog):
                         # its still an invalid command
                         working_commands.append("# " + originalcommand)
                         bytecodes.append("invalid instruction")
+                        continue
+
+                    elif command[0] == "show":
+                        showmessage = await special_commands(ctx, ["view", "all"], memory, registers, should_execute, memptr, splreg)
+                        showmode = True
                         continue
                     
                     elif command[0] == "step":
@@ -251,7 +257,7 @@ async def special_commands(ctx, command, memory, registers, should_execute, memp
 
             # compile the output
             instructions = ["```avrasm", "Assembly:              Bytecode:"]
-            ins, bytecode = bytes_to_assembly_and_bytecode(strn, splreg["PC"])
+            ins, bytecode = bytes_to_assembly_and_bytecode(strn, splreg["PC"], splreg["LASTPC"])
             instructions += ins
 
             # add bytecode
@@ -271,6 +277,7 @@ async def special_commands(ctx, command, memory, registers, should_execute, memp
         specialx += "`ins`\nView the current set of instructions. This is done by reading off the memory as if everything were instructions.\n\n`ins .pos 0x1000`\nViews the current set of instructions by reading them off memory from `0x1000`. Change this value to view a different memory location.\n\n"
         specialx += "`auto on`\nActivates auto mode. This means any command you type executes immediately.\n\n`auto off`\nDeactivates auto mode. This turns the system into a text-editor-esque IDE where commands you enter don't execute.\n\n"
         specialx += "`step`\nManually executes the instruction at the current location of the Program Counter (PC). Increments PC accordingly.\n\n`step 2`\nSteps twice. Replace 2 with how many steps you want to take.\n\n`step cont`\nSteps forever until a halt is found.\n\n`step cont show`\nStep with realtime status feedback.\n\n"
+        specialx += "`show`\nAdd this to the end of your instructions to dynamically display PC operations.\n\n"
         specialx += "`help`\nViews this message."
         fields.append([":sparkles: Special Commands\n_ _", specialx])
         return await mbed(ctx, "Discord Simple Machine Docs", "This assumes you have at least some knowledge of the sm213 language. If you don't, please review the language first before continuing.", fields = fields, footer = "Credits:\n\nThe sm213 language was created by Dr. Mike Feeley of the CPSC department at UBCV.\nUsed with permission.\n\nDiscord Simple Machine created by James Yu with feedback from users and friends.\nLoosely inspired by the functionality of the Java Simple Machine 213\nand the web 213/313 simulator.\nSignificant upgrades by https://github.com/ethanthoma\nSpeed optimizations by https://github.com/Kieran-Weaver")
@@ -315,10 +322,16 @@ async def special_commands(ctx, command, memory, registers, should_execute, memp
                 for i in range(20):
                     num = "0x" + hex(pos + i * 4)[2:].zfill(4)
                     # extract individual bytes
-                    a = hex(myslice[i * 4])
-                    b = hex(myslice[i * 4 + 1])
-                    c = hex(myslice[i * 4 + 2])
-                    d = hex(myslice[i * 4 + 3])
+                    mapping = dict(zip("0123456789abcdef", "⁰¹²³⁴⁵⁶⁷⁸⁹ᵃᵇᶜᵈᵉᶠ"))
+
+                    thebytes = ""
+                    for j in range(4):
+                        a = hex(myslice[i * 4 + j])[2:].zfill(2)
+                        exact_position = pos + i * 4 + j
+                        if exact_position in range(splreg["LASTPC"], splreg["LASTPC"] + [2, 6][splreg["insOpCode"] in [0, 11]]):
+                            for char in mapping:
+                                a = a.replace(char, mapping[char])
+                        thebytes += " " + a
 
                     # ascii representation
                     asc = [chr(myslice[i * 4 + x]) for x in range(4)]
@@ -332,7 +345,7 @@ async def special_commands(ctx, command, memory, registers, should_execute, memp
 
                     # get signed integer value and save line
                     val = to_unsigned(int.from_bytes(myslice[i * 4 : i * 4 + 4], 'big'), 32)
-                    lines.append(f"{num}: {a[2:].zfill(2)} {b[2:].zfill(2)} {c[2:].zfill(2)} {d[2:].zfill(2)} |{res}|  {val}")
+                    lines.append(f"{num}:{thebytes} |{res}|  {val}")
             
             else:
                 # if not displaying memory, have a different header
@@ -360,8 +373,9 @@ async def special_commands(ctx, command, memory, registers, should_execute, memp
                 content = get_ins_back(splreg)
                 registerx.append(f"instruction: {content}")
                 if content:
-                    last = bytes_to_assembly(content, splreg['PC'])
+                    last = bytes_to_assembly(content, splreg['PC'], splreg['LASTPC'])
                     registerx.append(f"plaintext: {last}")
+
             text = "\n".join(lines + registerx + [f"\nEdit Pointer: {hex(memptr)}", f"Mode: {['Text Editor', 'Interactive'][should_execute]}", "```"])
             if showmsg:
                 await showmsg.edit(content = text)
@@ -553,6 +567,7 @@ def step(instruction, icache, splreg, memptr, memory, registers, should_execute,
         #    pc -= pcpush
 
     pc += pcpush
+    splreg["LASTPC"] = splreg["PC"]
     splreg["PC"] = pc
 
 def to_unsigned(val, size):
@@ -815,7 +830,7 @@ def compress_bytes(opcode, op0, op1, op2, value = None):
     return myslice
 
 
-def bytes_to_assembly(strn, pc):
+def bytes_to_assembly(strn, pc, lastpc):
     """
     given a string of hex bytes, return the sm213 instruction string
     """
@@ -890,20 +905,26 @@ def bytes_to_assembly(strn, pc):
     elif opcode == "8":
         # branch
         number = strn[2:4].lstrip('0')
-        if not number: number = 0
-        return f"br 0x{number}"
+        if not number: number = "0"
+        as_signed = int(number, 16)
+        if as_signed > 127: as_signed = -1 * (256 - as_signed)
+        return f"br {hex(as_signed * 2 + lastpc)}"
 
     elif opcode == "9":
         # branch if equal
         number = strn[2:4].lstrip('0')
-        if not number: number = 0
-        return f"beq r{strn[1]}, 0x{number}"
+        if not number: number = "0"
+        as_signed = int(number, 16)
+        if as_signed > 127: as_signed = -1 * (256 - as_signed)
+        return f"beq r{strn[1]}, {hex(as_signed * 2 + lastpc)}"
 
     elif opcode == "a":
         # branch if greater
         number = strn[2:4].lstrip('0')
-        if not number: number = 0
-        return f"bgt r{strn[1]}, 0x{number}"
+        if not number: number = "0"
+        as_signed = int(number, 16)
+        if as_signed > 127: as_signed = -1 * (256 - as_signed)
+        return f"bgt r{strn[1]}, {hex(as_signed * 2 + lastpc)}"
 
     elif opcode == "b" and len(strn) >= 12:
         # jump immediate
@@ -926,7 +947,7 @@ def bytes_to_assembly(strn, pc):
     return "# invalid instruction"
 
 
-def bytes_to_assembly_and_bytecode(strn, pc):
+def bytes_to_assembly_and_bytecode(strn, pc, lastpc):
     """
     given a string of bytes from memory, reads off the bytes into a list of sm213 instructions and bytecodes
     """
@@ -940,7 +961,7 @@ def bytes_to_assembly_and_bytecode(strn, pc):
         length = [4, 12][strn[counter] in "0b"]
         instruction = strn[counter:counter+length]
         # find the instruction
-        instructions.append(bytes_to_assembly(instruction, pc))
+        instructions.append(bytes_to_assembly(instruction, pc, lastpc))
         bytecode.append(instruction)
         # go to the next instruction
         counter += length
