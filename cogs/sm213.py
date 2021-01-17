@@ -323,7 +323,7 @@ async def special_commands(ctx, command, memory, registers, should_execute, memp
                 regcontent = [f"r{i}: {to_unsigned(registers[i], 32)}" for i in range(len(registers))]
                 registerx.append(" | ".join(regcontent))
                 registerx.append("Registers (hex):")
-                regcontent = [f"r{i}: {'0x'+hex(registers[i])[2:].zfill(8)}" for i in range(len(registers))]
+                regcontent = [f"r{i}: {hex(registers[i])}" for i in range(len(registers))]
                 registerx.append(" | ".join(regcontent))
                 registerx.append("")
                 regcontent = [f"{key}: {hex(splreg[key])}" for key in splreg]
