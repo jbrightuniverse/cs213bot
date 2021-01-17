@@ -78,11 +78,12 @@ class SM213(commands.Cog):
         await mbed(ctx, "Discord Simple Machine 213", "**Type `help` for a commands list.**\n\nNOTE: branching commands do not currently exhibit expected behaviour. Please refrain from relying on their current characteristics for learning.")
 
         ticker = 0
+        num_steps = 1
         while True:
             if ticker % 256 == 0:
                 await asyncio.sleep(0)
             ticker += 1
-            if (not should_execute or memptr == splreg["PC"]) and not should_tick:
+            if (not should_execute or memptr == splreg["PC"]) and not should_tick and num_steps == 1:
                 icache = {}
                 #splreg["PC"] = memptr
                 # check if last execution has finished and a ping was sent
@@ -127,6 +128,15 @@ class SM213(commands.Cog):
                         if elements_equal(instruction, get_bytes_from_ins(["halt"], memptr)):
                             memptr += 2
 
+                        num_steps = 1
+                        if len(command) == 2:
+                            # take a num_steps argument
+                            num_steps = command[1]
+                            if not num_steps.isdigit() or int(num_steps) < 1:
+                                num_steps = 1
+                            else:
+                                num_steps = int(num_steps)
+
                     else:
                         instruction = get_bytes_from_ins(command, memptr)
                         memory, memptr = write_to_mem(instruction, memory, memptr)
@@ -155,7 +165,7 @@ class SM213(commands.Cog):
                         instructions.append(working_commands[i].ljust(20) + " | " + bytecodes[i])
 
                     await ctx.send("\n".join(instructions + ["```"]))
-            elif should_execute or should_tick:
+            elif should_execute or should_tick or num_steps > 1:
                 # ping if the execution is taking awhile
                 if should_ping_time and current_time > start_time + 1:
                     await ctx.send("```Execution still in progress, please wait...```")
@@ -172,6 +182,9 @@ class SM213(commands.Cog):
                 if not any(memory[splreg["PC"]:splreg["PC"] + 12]):
                     instruction = [0xF0, 0] # halt
                     memptr = splreg["PC"]
+
+                if num_steps > 1:
+                    num_steps -= 1
                 
                 # convert ints to a bytecode string
                 #strn = make_byte(instruction)

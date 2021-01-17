@@ -5,10 +5,10 @@
 **Short/Medium-Term:**
 - [ ] stepping: `step` function needs a parameter
      * - [x] no parameter: step once
-     * - [ ] int parameter: step that many times
-     * - [ ] `cont`: step infinitely until halt is found
-     * - [ ] optional speed parameter for controlling whether each step is displayed explicitly; `1` would edit the message every second, `2` would skip every second instruction, still editing every second, no parameter would not display anything but the last instruction
-- [ ] fix forward jump infinity glitch
+     * - [X] int parameter: step that many times
+     * - [X] ~~`cont`: step infinitely until halt is found~~ this functionality is possible by stepping once in interactive mode
+     * - [ ] optional speed parameter for controlling whether each step is displayed explicitly; ~~`1` would edit the message every second, `2` would skip every second instruction, still editing every second, no parameter would not display anything but the last instruction~~ parameter is called `show`
+- [ ] fix forward jump infinity glitch: may be related to error in automatic halt
 - [ ] support the use of labels for addresses in memory; allow these labels to be used with branching
 - [ ] support assignments of static variables in memory with `.long`
 - [ ] add infinite loop cancellation command
@@ -17,6 +17,7 @@
 
 - [X] interactive and continuous step mode: treat the existence of a double `000000000000` instruction (two `ld $0, r0` instructions in a row) as a breakpoint when stepping or running indefinitely; set the PC and memory pointer to that of the first `ld`
      * - [ ] use this mechanism to not print exess instructions in `ins`
+     * - [ ] fix invalid instruction at the end of `ins`
 - [ ] better way of explaining the two different modes
 
 ## sm213: other
