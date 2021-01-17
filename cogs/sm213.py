@@ -80,6 +80,7 @@ class SM213(commands.Cog):
         ticker = 0
         num_steps = 1
         showmode = False
+        showmessage = None
         while True:
             if ticker % 256 == 0:
                 await asyncio.sleep(0)
@@ -92,6 +93,7 @@ class SM213(commands.Cog):
                     await ctx.send("```Execution finished```")
                     await special_commands(ctx, ["view"], memory, registers, should_execute, memptr, splreg)
                     showmode = False
+                    showmessage = None
                     sent_ping = False
 
                 # wait for a message
@@ -134,12 +136,15 @@ class SM213(commands.Cog):
                         if len(command) >= 2:
                             # take a num_steps argument
                             num_steps = command[1]
-                            if not num_steps.isdigit() or int(num_steps) < 1:
+                            if num_steps == "cont":
+                                num_steps = len(memory)
+                            elif not num_steps.isdigit() or int(num_steps) < 1:
                                 num_steps = 1
                             else:
-                                num_steps = int(num_steps)
+                                num_steps = int(num_steps) + 1
 
-                            if command.endswith("show"):
+                            if command[-1] == "show":
+                                showmessage = await special_commands(ctx, ["view", "all"], memory, registers, should_execute, memptr, splreg)
                                 showmode = True
 
                     else:
@@ -200,6 +205,9 @@ class SM213(commands.Cog):
 
                 try:
                     step(instruction, icache, splreg, memptr, memory, registers, should_execute, debug)
+                    if showmode:
+                        await special_commands(ctx, ["view", "all"], memory, registers, should_execute, memptr, splreg, showmsg = showmessage)
+                        await asyncio.sleep(1.001)
                 except Exception as e:
                     if debug:
                         # print a nicely formatted thing
@@ -218,7 +226,7 @@ class SM213(commands.Cog):
 def elements_equal(list1, list2):
     return all(list(map(lambda x, y: x == y, list1, list2)))
 
-async def special_commands(ctx, command, memory, registers, should_execute, memptr, splreg):
+async def special_commands(ctx, command, memory, registers, should_execute, memptr, splreg, showmsg = None):
     """
     some special non-sm213 commands
     """
@@ -262,7 +270,7 @@ async def special_commands(ctx, command, memory, registers, should_execute, memp
         specialx += "`view mem`\nShortcut to view memory at `0x0`.\n\n`view reg`\nViews all register contents.\n\n`view all`\nViews everything.\n\n`view .pos 0x1000 all`\nViews everything with memory starting from `0x1000`.\n\n"
         specialx += "`ins`\nView the current set of instructions. This is done by reading off the memory as if everything were instructions.\n\n`ins .pos 0x1000`\nViews the current set of instructions by reading them off memory from `0x1000`. Change this value to view a different memory location.\n\n"
         specialx += "`auto on`\nActivates auto mode. This means any command you type executes immediately.\n\n`auto off`\nDeactivates auto mode. This turns the system into a text-editor-esque IDE where commands you enter don't execute.\n\n"
-        specialx += "`step`\nManually executes the instruction at the current location of the Program Counter (PC). Increments PC accordingly.\n\n"
+        specialx += "`step`\nManually executes the instruction at the current location of the Program Counter (PC). Increments PC accordingly.\n\n`step 2`\nSteps twice. Replace 2 with how many steps you want to take.\n\n`step cont`\nSteps forever until a halt is found.\n\n`step cont show`\nStep with realtime status feedback.\n\n"
         specialx += "`help`\nViews this message."
         fields.append([":sparkles: Special Commands\n_ _", specialx])
         return await mbed(ctx, "Discord Simple Machine Docs", "This assumes you have at least some knowledge of the sm213 language. If you don't, please review the language first before continuing.", fields = fields, footer = "Credits:\n\nThe sm213 language was created by Dr. Mike Feeley of the CPSC department at UBCV.\nUsed with permission.\n\nDiscord Simple Machine created by James Yu with feedback from users and friends.\nLoosely inspired by the functionality of the Java Simple Machine 213\nand the web 213/313 simulator.\nSignificant upgrades by https://github.com/ethanthoma\nSpeed optimizations by https://github.com/Kieran-Weaver")
@@ -349,22 +357,30 @@ async def special_commands(ctx, command, memory, registers, should_execute, memp
                 registerx.append("\n".join(regcontent))
 
                 # determine what the instruction actually was
-                myslice = memory[splreg['PC'] - [2, 6][splreg["insOpCode"] in [0, 11]] : splreg['PC']]
-                content = ""
-                for i in range(len(myslice)):
-                    a = hex(myslice[i])
-                    res = a[2:].zfill(2)
-                    content += res
-
+                content = get_ins_back(splreg)
                 registerx.append(f"instruction: {content}")
                 if content:
                     last = bytes_to_assembly(content, splreg['PC'])
                     registerx.append(f"plaintext: {last}")
-
-            return await ctx.send("\n".join(lines + registerx + [f"\nEdit Pointer: {hex(memptr)}", f"Mode: {['Text Editor', 'Interactive'][should_execute]}", "```"]))
+            text = "\n".join(lines + registerx + [f"\nEdit Pointer: {hex(memptr)}", f"Mode: {['Text Editor', 'Interactive'][should_execute]}", "```"])
+            if showmsg:
+                await showmsg.edit(content = text)
+                return
+            return await ctx.send(text)
 
     # catch-all exit, return None if nothing worked
     return None
+
+def get_ins_back(splreg):
+    """
+    get instruction from an instance of specialregisters
+    """
+
+    first = hex(splreg["insOpCode"])[2:] + hex(splreg["insOp0"])[2:] + hex(splreg["insOp1"])[2:] + hex(splreg["insOp2"])[2:]
+    if splreg["insOpCode"] in [0, 11]:
+        first += hex(splreg["insOpExt"])[2:].zfill(8)
+
+    return first
 
 
 def read_num(val): 

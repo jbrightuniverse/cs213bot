@@ -3,11 +3,6 @@
 ## sm213: Discord Simple Machine
 
 **Short/Medium-Term:**
-- [ ] stepping: `step` function needs a parameter
-     * - [x] no parameter: step once
-     * - [X] int parameter: step that many times
-     * - [X] ~~`cont`: step infinitely until halt is found~~ this functionality is possible by stepping once in interactive mode
-     * - [ ] optional speed parameter for controlling whether each step is displayed explicitly; ~~`1` would edit the message every second, `2` would skip every second instruction, still editing every second, no parameter would not display anything but the last instruction~~ parameter is called `show`
 - [ ] fix forward jump infinity glitch: may be related to error in automatic halt
 - [ ] support the use of labels for addresses in memory; allow these labels to be used with branching
 - [ ] support assignments of static variables in memory with `.long`
@@ -56,3 +51,8 @@
 - [X] plaintext current instruction in `view`
 - [X] better feedback for running commands
      * - [X] figure out whether it would be useful to display memory or registers when a command executes
+- [X] stepping: `step` function needs a parameter
+     * - [x] no parameter: step once
+     * - [X] int parameter: step that many times
+     * - [X] `cont`: step infinitely until halt is found
+     * - [X] optional speed parameter for controlling whether each step is displayed explicitly; ~~`1` would edit the message every second, `2` would skip every second instruction, still editing every second, no parameter would not display anything but the last instruction~~ parameter is called `show`
