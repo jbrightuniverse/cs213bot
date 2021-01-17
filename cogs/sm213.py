@@ -79,6 +79,7 @@ class SM213(commands.Cog):
 
         ticker = 0
         num_steps = 1
+        showmode = False
         while True:
             if ticker % 256 == 0:
                 await asyncio.sleep(0)
@@ -90,11 +91,12 @@ class SM213(commands.Cog):
                 if sent_ping:
                     await ctx.send("```Execution finished```")
                     await special_commands(ctx, ["view"], memory, registers, should_execute, memptr, splreg)
+                    showmode = False
                     sent_ping = False
 
                 # wait for a message
                 message = await get(self.bot, ctx, "exit")
-                if not message: return # exit on return condition from get function
+                if not message or message == "!sim": return # exit on return condition from get function
                 if message.content == "": continue # skip if blank
 
                 commands = message.content.lower().split("\n")
@@ -129,13 +131,16 @@ class SM213(commands.Cog):
                             memptr += 2
 
                         num_steps = 1
-                        if len(command) == 2:
+                        if len(command) >= 2:
                             # take a num_steps argument
                             num_steps = command[1]
                             if not num_steps.isdigit() or int(num_steps) < 1:
                                 num_steps = 1
                             else:
                                 num_steps = int(num_steps)
+
+                            if command.endswith("show"):
+                                showmode = True
 
                     else:
                         instruction = get_bytes_from_ins(command, memptr)
