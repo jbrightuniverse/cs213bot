@@ -84,6 +84,7 @@ class SM213(commands.Cog):
             ticker += 1
             if (not should_execute or memptr == splreg["PC"]) and not should_tick:
                 icache = {}
+                #splreg["PC"] = memptr
                 # check if last execution has finished and a ping was sent
                 if sent_ping:
                     await ctx.send("```Execution finished```")
@@ -338,11 +339,11 @@ async def special_commands(ctx, command, memory, registers, should_execute, memp
                     content += res
 
                 registerx.append(f"instruction: {content}")
-                last = bytes_to_assembly(content, splreg['PC'])
-                registerx.append(f"plaintext: {last}")
+                if content:
+                    last = bytes_to_assembly(content, splreg['PC'])
+                    registerx.append(f"plaintext: {last}")
 
-
-            return await ctx.send("\n".join(lines + registerx + [f"Edit Pointer: {hex(memptr)}", f"Mode: {['Text Editor', 'Interactive'][should_execute]}", "```"]))
+            return await ctx.send("\n".join(lines + registerx + [f"\nEdit Pointer: {hex(memptr)}", f"Mode: {['Text Editor', 'Interactive'][should_execute]}", "```"]))
 
     # catch-all exit, return None if nothing worked
     return None

@@ -8,11 +8,10 @@
      * - [ ] int parameter: step that many times
      * - [ ] `cont`: step infinitely until halt is found
      * - [ ] optional speed parameter for controlling whether each step is displayed explicitly; `1` would edit the message every second, `2` would skip every second instruction, still editing every second, no parameter would not display anything but the last instruction
+- [ ] fix forward jump infinity glitch
 - [ ] support the use of labels for addresses in memory; allow these labels to be used with branching
 - [ ] support assignments of static variables in memory with `.long`
 - [ ] add infinite loop cancellation command
-
-
 
 **Long-Term:**
 
