@@ -96,7 +96,7 @@ class SM213(commands.Cog):
 
                 # wait for a message
                 message = await get(self.bot, ctx, "exit")
-                if not message or message == "!sim": return # exit on return condition from get function
+                if not message or message.content == "!sim": return # exit on return condition from get function
                 if message.content == "": continue # skip if blank
 
                 commands = message.content.lower().split("\n")
