@@ -87,6 +87,7 @@ class SM213(commands.Cog):
                 # check if last execution has finished and a ping was sent
                 if sent_ping:
                     await ctx.send("```Execution finished```")
+                    await special_commands(ctx, ["view"], memory, registers, should_execute, memptr, splreg)
                     sent_ping = False
 
                 # wait for a message
@@ -102,6 +103,7 @@ class SM213(commands.Cog):
                 for originalcommand in commands:
                     # extract the command, delete any comments or leading whitespace
                     command = originalcommand.lstrip().split("#")[0].split()
+                    bytecode = ""
 
                     # if that was a blank line or entirely comment, command is invalid
                     if len(command) == 0: 
@@ -120,6 +122,7 @@ class SM213(commands.Cog):
                     
                     elif command[0] == "step":
                         should_tick = True
+                        sent_ping = True
                         if elements_equal(instruction, get_bytes_from_ins(["halt"], memptr)):
                             memptr += 2
 
@@ -170,11 +173,11 @@ class SM213(commands.Cog):
                     memptr = splreg["PC"]
                 
                 # convert ints to a bytecode string
-                strn = make_byte(instruction)
+                #strn = make_byte(instruction)
 
                 # retrieve the instruction from the bytecode
-                instructions, _ = bytes_to_assembly_and_bytecode(strn, splreg["PC"])
-                originalcommand = instructions[0]
+                #instructions, _ = bytes_to_assembly_and_bytecode(strn, splreg["PC"])
+                #originalcommand = instructions[0]
 
                 try:
                     step(instruction, icache, splreg, memptr, memory, registers, should_execute, debug)
@@ -335,6 +338,9 @@ async def special_commands(ctx, command, memory, registers, should_execute, memp
                     content += res
 
                 registerx.append(f"instruction: {content}")
+                last = bytes_to_assembly(content, splreg['PC'])
+                registerx.append(f"plaintext: {last}")
+
 
             return await ctx.send("\n".join(lines + registerx + [f"Edit Pointer: {hex(memptr)}", f"Mode: {['Text Editor', 'Interactive'][should_execute]}", "```"]))
 
