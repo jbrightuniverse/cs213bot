@@ -239,7 +239,6 @@ async def special_commands(ctx, command, memory, registers, should_execute, memp
     
     instruction = command[0]
     operands = command[1:]
-    
     if instruction == "ins":
         # instruction display mode
         if len(command) == 1:
@@ -276,10 +275,11 @@ async def special_commands(ctx, command, memory, registers, should_execute, memp
         specialx += "`view mem`\nShortcut to view memory at `0x0`.\n\n`view reg`\nViews all register contents.\n\n`view all`\nViews everything.\n\n`view .pos 0x1000 all`\nViews everything with memory starting from `0x1000`.\n\n"
         specialx += "`ins`\nView the current set of instructions. This is done by reading off the memory as if everything were instructions.\n\n`ins .pos 0x1000`\nViews the current set of instructions by reading them off memory from `0x1000`. Change this value to view a different memory location.\n\n"
         specialx += "`auto on`\nActivates auto mode. This means any command you type executes immediately.\n\n`auto off`\nDeactivates auto mode. This turns the system into a text-editor-esque IDE where commands you enter don't execute.\n\n"
-        specialx += "`step`\nManually executes the instruction at the current location of the Program Counter (PC). Increments PC accordingly.\n\n`step 2`\nSteps twice. Replace 2 with how many steps you want to take.\n\n`step cont`\nSteps forever until a halt is found.\n\n`step cont show`\nStep with realtime status feedback.\n\n"
+        fields.append([":sparkles: Special Commands\n_ _", specialx])
+        specialx = "`step`\nManually executes the instruction at the current location of the Program Counter (PC). Increments PC accordingly.\n\n`step 2`\nSteps twice. Replace 2 with how many steps you want to take.\n\n`step cont`\nSteps forever until a halt is found.\n\n`step cont show`\nStep with realtime status feedback.\n\n"
         specialx += "`show`\nAdd this to the end of your instructions to dynamically display PC operations.\n\n"
         specialx += "`help`\nViews this message."
-        fields.append([":sparkles: Special Commands\n_ _", specialx])
+        fields.append(['\u200b', specialx])
         return await mbed(ctx, "Discord Simple Machine Docs", "This assumes you have at least some knowledge of the sm213 language. If you don't, please review the language first before continuing.", fields = fields, footer = "Credits:\n\nThe sm213 language was created by Dr. Mike Feeley of the CPSC department at UBCV.\nUsed with permission.\n\nDiscord Simple Machine created by James Yu with feedback from users and friends.\nLoosely inspired by the functionality of the Java Simple Machine 213\nand the web 213/313 simulator.\nSignificant upgrades by https://github.com/ethanthoma\nSpeed optimizations by https://github.com/Kieran-Weaver")
 
     elif instruction == "auto":
@@ -806,7 +806,7 @@ def get_offset_reg(operand):
         offset = read_num(basedata[0])
 
     # the second bracket should be at the end of the other half of the split
-    register = int(basedata[1][:-1]) 
+    register = reg(basedata[1][:-1])
     return register, offset
 
 
