@@ -548,12 +548,12 @@ def step(instruction, icache, splreg, memptr, memory, registers, should_execute,
 
     elif opcode == 12:
         # jump base + distance
-        pp = to_unsigned(compile_byte(pcr["insOp1"], pcr["insOp2"]))
+        pp = to_unsigned(compile_byte(pcr["insOp1"], pcr["insOp2"]), 8)
         pc = registers[pcr["insOp0"]] + pp * 2 - pcpush
 
     elif opcode == 13:
         # jump indirect base + distance
-        pp = to_unsigned(compile_byte(pcr["insOp1"], pcr["insOp2"]))
+        pp = to_unsigned(compile_byte(pcr["insOp1"], pcr["insOp2"]), 8)
         pc = memory[registers[pcr["insOp0"]] + pp * 4] - pcpush
 
     elif opcode == 14:
