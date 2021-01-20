@@ -3,7 +3,6 @@
 ## sm213: Discord Simple Machine
 
 **Short/Medium-Term:**
-- [ ] fix forward jump infinity glitch: may be related to error in automatic halt
 - [ ] support the use of labels for addresses in memory; allow these labels to be used with branching
 - [ ] support assignments of static variables in memory with `.long`
 - [ ] add infinite loop cancellation command
@@ -56,3 +55,4 @@
      * - [X] int parameter: step that many times
      * - [X] `cont`: step infinitely until halt is found
      * - [X] optional speed parameter for controlling whether each step is displayed explicitly; ~~`1` would edit the message every second, `2` would skip every second instruction, still editing every second, no parameter would not display anything but the last instruction~~ parameter is called `show`
+- [X] fix forward jump infinity glitch: may be related to error in automatic halt
