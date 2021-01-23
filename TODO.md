@@ -4,6 +4,9 @@
 
 **Short/Medium-Term:**
 - [X] support the use of labels for addresses in memory; allow these labels to be used with branching
+     * - [ ] allow labels to be read back in `ins`
+     * - [ ] make it so labels can be placed manually
+     * - [ ] prevent labels from triggering invalid instruction when written
 - [ ] support assignments of static variables in memory with `.long`
 - [ ] support integrated usage of `.pos`
 - [ ] syscalls
