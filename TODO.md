@@ -5,7 +5,7 @@
 **Short/Medium-Term:**
 - [X] support the use of labels for addresses in memory; allow these labels to be used with branching
 - [ ] support assignments of static variables in memory with `.long`
-- [ ] add infinite loop cancellation command
+- [ ] support integrated usage of `.pos`
 - [ ] syscalls
 
 **Long-Term:**
@@ -56,3 +56,4 @@
      * - [X] use this mechanism to not print exess instructions in `ins`
      * - [X] fix invalid instruction at the end of `ins`
 - [X] better way of explaining the two different modes
+- [X] add infinite loop cancellation command
