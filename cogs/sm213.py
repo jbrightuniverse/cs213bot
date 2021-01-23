@@ -627,12 +627,18 @@ async def step(ctx, bot, instruction, icache, splreg, memptr, memory, registers,
             elif pcr["insOp2"] == 1:
                 # write to output
                 bufsize = registers[2]
-                myslice = memory[registers[1] : registers[1] + bufsize]
-                await ctx.send("".join([chr(c) for c in myslice]))
+                if bufsize > 1980:
+                    await ctx.send("ERROR: Buffer cannot be bigger than 1980 chars.")
+                else:
+                    myslice = memory[registers[1] : registers[1] + bufsize]
+                    await ctx.send("".join([chr(c) for c in myslice]))
             elif pcr["insOp2"] == 2:
                 bufsize = registers[2]
-                myslice = memory[registers[1] : registers[1] + bufsize]
-                await ctx.send("<<<WOULD EXECUTE " + "".join([chr(c) for c in myslice]) + ">>>")
+                if bufsize > 1980:
+                    await ctx.send("ERROR: Buffer cannot be bigger than 1980 chars.")
+                else:
+                    myslice = memory[registers[1] : registers[1] + bufsize]
+                    await ctx.send("<<<WOULD EXECUTE " + "".join([chr(c) for c in myslice]) + ">>>")
 
     pc += pcpush
     splreg["LASTPC"] = splreg["PC"]
