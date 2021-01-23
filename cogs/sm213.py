@@ -232,7 +232,7 @@ class SM213(commands.Cog):
                 #originalcommand = instructions[0]
 
                 try:
-                    step(instruction, icache, splreg, memptr, memory, registers, labels, should_execute, debug)
+                    await step(ctx, self.bot, instruction, icache, splreg, memptr, memory, registers, labels, should_execute, debug)
                     if showmode:
                         await special_commands(ctx, ["view", "all"], memory, registers, should_execute, memptr, splreg, showmsg = showmessage)
                         await asyncio.sleep(1.001)
@@ -488,7 +488,7 @@ def read_from_mem(memory, memptr):
 def make_byte(instruction):
     return binascii.hexlify(bytes(instruction)).decode("utf-8")
 
-def step(instruction, icache, splreg, memptr, memory, registers, labels, should_execute, debug):
+async def step(ctx, bot, instruction, icache, splreg, memptr, memory, registers, labels, should_execute, debug):
     """
     step through and/or execute instruction
     """
@@ -604,11 +604,35 @@ def step(instruction, icache, splreg, memptr, memory, registers, labels, should_
         # jump indirect indexed
         pc = memory[registers[pcr["insOp0"]] + registers[pcr["insOp1"]] * 4] - pcpush
 
-    elif opcode == 15 and pcr["insOp0"] == 0:
-        # halt
-        pass
-        #if should_execute:
-        #    pc -= pcpush
+    elif opcode == 15:
+        if pcr["insOp0"] == 0:
+            # halt
+            pass
+            #if should_execute:
+            #    pc -= pcpush
+
+        elif pcr["insOp0"] == 1:
+            # syscalls
+            # normally r0 is used as the filedescriptor but since we only write to stdin/stdout, we don't care
+            if pcr["insOp2"] == 0:
+                # read from input
+                bufsize = registers[2]
+                await ctx.send("Enter input to save:")
+                message = await get(bot, ctx, "exit")
+                if message.content:
+                    # dump it into memory
+                    myslice = [ord(c) for c in message.content][:bufsize]
+                    memory[registers[1] : registers[1] + bufsize] = myslice
+                    await ctx.send("Input saved.")
+            elif pcr["insOp2"] == 1:
+                # write to output
+                bufsize = registers[2]
+                myslice = memory[registers[1] : registers[1] + bufsize]
+                await ctx.send("".join([chr(c) for c in myslice]))
+            elif pcr["insOp2"] == 2:
+                bufsize = registers[2]
+                myslice = memory[registers[1] : registers[1] + bufsize]
+                await ctx.send("<<<WOULD EXECUTE " + "".join([chr(c) for c in myslice]) + ">>>")
 
     pc += pcpush
     splreg["LASTPC"] = splreg["PC"]
@@ -810,6 +834,12 @@ def get_bytes_from_ins(command, memptr, labels, undefined_labels, MEMORY_SIZE):
         # get pc: 6Fpd
         # e.g. gpc $6, r6
         return compress_bytes(6, 15, read_num(operands[0])//2, reg(operands[1]))
+
+    elif instruction == "sys" and len(operands) == 1:
+        # syscall: F1nn
+        # e.g. sys $2
+        # TEMPORARILY ONLY SUPPORTS SINGLE DIGIT SYSCALLS
+        return compress_bytes(15, 1, 0, read_num(operands[0]))
     
     elif instruction == "j":
         # jump
@@ -954,6 +984,8 @@ def bytes_to_assembly(strn, pc, lastpc):
     elif opcode == "f":
         if strn[1] == "0":
             return "halt"
+        elif strn[1] == "1":
+            return f"sys ${strn[3]}"
         elif strn[1] == "f":
             return "nop"
 
