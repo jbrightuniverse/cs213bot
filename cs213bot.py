@@ -4,6 +4,7 @@ import json
 import os
 import random
 import re
+import time
 import traceback
 from datetime import datetime
 from os.path import isfile, join
@@ -81,6 +82,7 @@ async def wipe_dms():
 
     while True:
         await asyncio.sleep(300)
+        bot.get_cog("SM213").queue = list(filter(lambda x: time.time() - x[1] < 300, bot.get_cog("SM213").queue))
         now = datetime.utcnow()
 
         for channel in filter(lambda c: c.name.startswith("213dm-"), guild.channels):
@@ -152,6 +154,9 @@ async def on_message(message):
         if re.findall(r"<<@&457618814058758146>&?\d{18}>", message.content):
             new = message.content.replace("<@&457618814058758146>", "@")
             await message.channel.send(new)
+
+        if message.content.lower() == "cancel":
+            bot.get_cog("SM213").queue.append([message.author.id, time.time()])
 
         await bot.process_commands(message)
 

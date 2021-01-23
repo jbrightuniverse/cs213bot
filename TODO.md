@@ -3,16 +3,12 @@
 ## sm213: Discord Simple Machine
 
 **Short/Medium-Term:**
-- [ ] support the use of labels for addresses in memory; allow these labels to be used with branching
+- [X] support the use of labels for addresses in memory; allow these labels to be used with branching
 - [ ] support assignments of static variables in memory with `.long`
 - [ ] add infinite loop cancellation command
+- [ ] syscalls
 
 **Long-Term:**
-
-- [X] interactive and continuous step mode: treat the existence of a double `000000000000` instruction (two `ld $0, r0` instructions in a row) as a breakpoint when stepping or running indefinitely; set the PC and memory pointer to that of the first `ld`
-     * - [ ] use this mechanism to not print exess instructions in `ins`
-     * - [ ] fix invalid instruction at the end of `ins`
-- [ ] better way of explaining the two different modes
 
 ## sm213: other
 
@@ -56,3 +52,7 @@
      * - [X] `cont`: step infinitely until halt is found
      * - [X] optional speed parameter for controlling whether each step is displayed explicitly; ~~`1` would edit the message every second, `2` would skip every second instruction, still editing every second, no parameter would not display anything but the last instruction~~ parameter is called `show`
 - [X] fix forward jump infinity glitch: may be related to error in automatic halt
+- [X] interactive and continuous step mode: treat the existence of a double `000000000000` instruction (two `ld $0, r0` instructions in a row) as a breakpoint when stepping or running indefinitely; set the PC and memory pointer to that of the first `ld`
+     * - [X] use this mechanism to not print exess instructions in `ins`
+     * - [X] fix invalid instruction at the end of `ins`
+- [X] better way of explaining the two different modes

@@ -13,6 +13,12 @@ class SM213(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
+        self.queue = []
+
+    @commands.command()
+    @commands.is_owner()
+    async def test(self, ctx):
+        await ctx.send(self.queue)
 
     @commands.command()
     @commands.is_owner()
@@ -81,7 +87,7 @@ class SM213(commands.Cog):
         should_ping_time = False
         sent_ping = False
 
-        await mbed(ctx, "Discord Simple Machine 213", "**Type `help` for a commands list.**")
+        await mbed(ctx, "Discord Simple Machine 213", "***READ ME FIRST:***\n**Type `help` for a commands list.**\nYou are currently in `automatic execution mode`.\nTo switch modes, type `help` for details.")
 
         ticker = 0
         num_steps = 1
@@ -196,7 +202,7 @@ class SM213(commands.Cog):
             elif should_execute or should_tick or num_steps > 1:
                 # ping if the execution is taking awhile
                 if should_ping_time and current_time > start_time + 1:
-                    await ctx.send("```Execution still in progress, please wait...```")
+                    await ctx.send("```Execution still in progress, please wait...type CANCEL to exit...```")
                     should_ping_time = False
                     sent_ping = True
 
@@ -213,6 +219,10 @@ class SM213(commands.Cog):
 
                 if num_steps > 1:
                     num_steps -= 1
+
+                if ctx.author.id in [a[0] for a in self.queue]:
+                    self.queue = list(filter(lambda x: x[0] != ctx.author.id, self.queue))
+                    return await ctx.send("**EXECUTION STOPPED. To prevent system corruption, your session has been terminated.\nPlease type `!sim` to reopen the simulator. You will need to re-type your code.**")
                 
                 # convert ints to a bytecode string
                 #strn = make_byte(instruction)
@@ -251,7 +261,7 @@ def recompile_undefined_labels(memory, labels, undefined_labels):
             op1, op2 = get_hexits(to_signed((labels[undefined_labels[pc]] - pc)//2, 8))
             if opcode == 8:
                 reg = 0
-            write_to_mem(compress_bytes(opcode, 0, op1, op2), memory, pc)
+            write_to_mem(compress_bytes(opcode, reg, op1, op2), memory, pc)
         elif opcode == 11:
             write_to_mem(compress_bytes(opcode, 0, 0, 0, read_num(hex(labels[undefined_labels[pc]]))), memory, pc)
         
@@ -289,7 +299,13 @@ async def special_commands(ctx, command, memory, registers, should_execute, memp
 
             # add bytecode
             for i in range(2, len(instructions)):
+                if bytecode[i - 2] == "0000": 
+                    del instructions[i]
+                    break
                 instructions[i] = instructions[i].ljust(20) + " | " + bytecode[i - 2]
+
+            while (instructions[-1] == "ld $0x0, r0          | 000000000000") and len(instructions) > 3:
+                del instructions[-1]
 
             return await ctx.send("\n".join(instructions + ["```"]))
 
@@ -483,7 +499,6 @@ def step(instruction, icache, splreg, memptr, memory, registers, labels, should_
     if pc not in icache:
         pcr, pcpush = split_instruction(instruction) 
         icache[pc] = (pcr, pcpush)
-        print(pc, pcr)
     else:
         pcr, pcpush = icache[pc]
 
