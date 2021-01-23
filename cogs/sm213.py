@@ -10,6 +10,7 @@ import discord
 from discord.ext import commands
 
 class SM213(commands.Cog):
+
     def __init__(self, bot):
         self.bot = bot
 
@@ -43,9 +44,9 @@ class SM213(commands.Cog):
 
         Run the command and type `help` for more detailed specs.
         """
-
         MEMORY_SIZE = 2**16
         NUM_REGISTERS = 8
+
 
         # initialize main memory and primary registers
         memory = np.zeros((MEMORY_SIZE,), dtype = np.uint8)
@@ -62,6 +63,10 @@ class SM213(commands.Cog):
             "insOpImm": 0,
             "insOpExt": 0
         }
+
+        # labels dictionary
+        labels = {}
+        undefined_labels = {}
 
         # some pointers
         memptr = 0
@@ -88,7 +93,7 @@ class SM213(commands.Cog):
             ticker += 1
             if (not should_execute or memptr == splreg["PC"]) and not should_tick and num_steps == 1:
                 icache = {}
-                #splreg["PC"] = memptr
+
                 # check if last execution has finished and a ping was sent
                 if sent_ping:
                     await ctx.send("```Execution finished```")
@@ -106,6 +111,8 @@ class SM213(commands.Cog):
                 bytecodes = []
                 working_commands = []
                 ins_found = False
+
+                check_for_undefined_labels = False
 
                 for originalcommand in commands:
                     # extract the command, delete any comments or leading whitespace
@@ -135,7 +142,7 @@ class SM213(commands.Cog):
                     elif command[0] == "step":
                         should_tick = True
                         sent_ping = True
-                        if elements_equal(instruction, get_bytes_from_ins(["halt"], memptr)):
+                        if elements_equal(instruction, get_bytes_from_ins(["halt"], memptr, labels, undefined_labels, MEMORY_SIZE)):
                             memptr += 2
 
                         num_steps = 1
@@ -154,7 +161,9 @@ class SM213(commands.Cog):
                                 showmode = True
 
                     else:
-                        instruction = get_bytes_from_ins(command, memptr)
+                        # instruction found
+                        instruction = get_bytes_from_ins(command, memptr, labels, undefined_labels, MEMORY_SIZE)
+                        check_for_undefined_labels = True
                         memory, memptr = write_to_mem(instruction, memory, memptr)
                         if len(bytecode := make_byte(instruction)) == 0:
                             bytecode = "# invalid instruction"
@@ -172,6 +181,9 @@ class SM213(commands.Cog):
                         # instruction was invalid
                         working_commands.append("# " + originalcommand)
                         bytecodes.append("invalid instruction")
+
+                if check_for_undefined_labels:
+                    recompile_undefined_labels(memory, labels, undefined_labels)
 
                 if ins_found: 
                     instructions = ["```avrasm"] # discord code block formatting
@@ -197,7 +209,7 @@ class SM213(commands.Cog):
                 # check if the next two instructions are load zeros
                 if not any(memory[splreg["PC"]:splreg["PC"] + 12]):
                     instruction = [0xF0, 0] # halt
-                    memptr = splreg["PC"]
+                    memptr = splreg["PC"] + 2
 
                 if num_steps > 1:
                     num_steps -= 1
@@ -210,7 +222,7 @@ class SM213(commands.Cog):
                 #originalcommand = instructions[0]
 
                 try:
-                    step(instruction, icache, splreg, memptr, memory, registers, should_execute, debug)
+                    step(instruction, icache, splreg, memptr, memory, registers, labels, should_execute, debug)
                     if showmode:
                         await special_commands(ctx, ["view", "all"], memory, registers, should_execute, memptr, splreg, showmsg = showmessage)
                         await asyncio.sleep(1.001)
@@ -228,6 +240,22 @@ class SM213(commands.Cog):
                 current_time = time.time()
             else:
                 icache = {}
+
+def recompile_undefined_labels(memory, labels, undefined_labels):
+    for pc in undefined_labels.keys():
+        instruction = read_from_mem(memory, pc)
+        opcode = int(hex(instruction[0])[2:3], 16)
+        reg = int(hex(instruction[0])[3:4], 16)
+
+        if opcode in [8, 9, 10]:
+            op1, op2 = get_hexits(to_signed((labels[undefined_labels[pc]] - pc)//2, 8))
+            if opcode == 8:
+                reg = 0
+            write_to_mem(compress_bytes(opcode, 0, op1, op2), memory, pc)
+        elif opcode == 11:
+            write_to_mem(compress_bytes(opcode, 0, 0, 0, read_num(hex(labels[undefined_labels[pc]]))), memory, pc)
+        
+    undefined_labels.clear()
 
 def elements_equal(list1, list2):
     return all(list(map(lambda x, y: x == y, list1, list2)))
@@ -444,7 +472,7 @@ def read_from_mem(memory, memptr):
 def make_byte(instruction):
     return binascii.hexlify(bytes(instruction)).decode("utf-8")
 
-def step(instruction, icache, splreg, memptr, memory, registers, should_execute, debug):
+def step(instruction, icache, splreg, memptr, memory, registers, labels, should_execute, debug):
     """
     step through and/or execute instruction
     """
@@ -455,6 +483,7 @@ def step(instruction, icache, splreg, memptr, memory, registers, should_execute,
     if pc not in icache:
         pcr, pcpush = split_instruction(instruction) 
         icache[pc] = (pcr, pcpush)
+        print(pc, pcr)
     else:
         pcr, pcpush = icache[pc]
 
@@ -561,8 +590,8 @@ def step(instruction, icache, splreg, memptr, memory, registers, should_execute,
         pc = memory[registers[pcr["insOp0"]] + registers[pcr["insOp1"]] * 4] - pcpush
 
     elif opcode == 15 and pcr["insOp0"] == 0:
-        pass
         # halt
+        pass
         #if should_execute:
         #    pc -= pcpush
 
@@ -603,7 +632,7 @@ def to_signed(val, size):
 
     return val
 
-def get_bytes_from_ins(command, memptr):
+def get_bytes_from_ins(command, memptr, labels, undefined_labels, MEMORY_SIZE):
     """
     given an sm213 instruction, returns the bytecode as a list of bytes
     """
@@ -713,22 +742,53 @@ def get_bytes_from_ins(command, memptr):
 
     elif instruction == "br" and len(operands) == 1:
         # branch: 8-pp
-        # e.g. br 0x1000
-        pp = to_signed((read_num(operands[0]) - memptr)//2, 8)
+        if "0x" in operands[0]:
+            # e.g. br 0x1000
+            pp = to_signed((read_num(operands[0]) - memptr)//2, 8)
+        elif operands[0] in labels.keys():
+            # e.g. br func
+            # label is already defined
+            pp = to_signed((labels[operands[0]] - memptr)//2, 8)
+        else:
+            # e.g. br func
+            # label is not yet defined
+            pp = 0
+            undefined_labels[memptr] = operands[0]
         op1, op2 = get_hexits(pp)
         return compress_bytes(8, 0, op1, op2)
 
     elif instruction == "beq" and len(operands) == 2:
         # branch if equal: 9spp
-        # e.g. beq r0, 0x1000
-        pp = to_signed((read_num(operands[1]) - memptr)//2, 8)
+        if "0x" in operands[1]:
+            # e.g. beq r0, 0x1000
+            pp = to_signed((read_num(operands[1]) - memptr)//2, 8)
+        elif operands[1] in labels.keys():
+            # e.g. beq r0, func
+            # label is already defined
+            pp = to_signed((labels[operands[1]] - memptr)//2, 8)
+        else:
+            # e.g. beq r0, func
+            # label is not yet defined
+            pp = 0
+            undefined_labels[memptr] = operands[1]
         op1, op2 = get_hexits(pp)
         return compress_bytes(9, reg(operands[0]), op1, op2)
 
     elif instruction == "bgt" and len(operands) == 2:
         # branch if greater: Aspp
+        if "0x" in operands[1]:
         # e.g. bgt r0, 0x1000
-        pp = to_signed((read_num(operands[1]) - memptr)//2, 8)
+            pp = to_signed((read_num(operands[1]) - memptr)//2, 8)
+        elif operands[1] in labels.keys():
+            # e.g. bgt r0, func
+            # label is already defined
+            pp = to_signed((labels[operands[1]] - memptr)//2, 8)
+        else:
+            # e.g. bgt r0, func
+            # label is not yet defined
+            pp = 0
+            undefined_labels[memptr] = operands[1]
+        op1, op2 = get_hexits(pp)
         return compress_bytes(10, reg(operands[0]), op1, op2)
 
     elif instruction == "gpc" and len(operands) == 2:
@@ -741,8 +801,20 @@ def get_bytes_from_ins(command, memptr):
         if len(operands) == 1:
             if "(" not in operands[0]:
                 # jump immediate: B--- aaaaaaaa
-                # e.g. j 0x1000
-                num = read_num(operands[0])
+                if "0x" in operands[0]:
+                    # e.g. j 0x1000
+                    num = read_num(operands[0])
+                    print(num)
+                elif operands[0] in labels.keys():
+                    # e.g. j func
+                    # label is already defined
+                    num = labels[operands[0]]
+                else:
+                    # e.g. j func
+                    # label is not yet defined
+                    num = MEMORY_SIZE
+                    undefined_labels[memptr] = operands[0]
+                    
                 return compress_bytes(11, 0, 0, 0, num)
 
             elif "*" not in operands[0] and "(" in operands[0]:
@@ -769,6 +841,11 @@ def get_bytes_from_ins(command, memptr):
             return compress_bytes(14, reg(operands[0][2:]), reg(operands[1]), 0)
 
         else: return []
+    elif instruction[len(instruction) - 1] == ":":
+        # label setter
+        labels[instruction[:len(instruction) - 1]] = memptr
+        return []
+
 
     return []
 
