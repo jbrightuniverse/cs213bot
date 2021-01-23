@@ -1,3 +1,5 @@
+import math
+import asyncio
 import os
 import random
 from datetime import datetime
@@ -17,6 +19,20 @@ class Meta(commands.Cog):
     @commands.is_owner()
     async def die(self, ctx):
         await self.bot.logout()
+
+    @commands.command()
+    @commands.is_owner()
+    async def clear(self, ctx, num):
+        await ctx.message.delete()
+        n = int(num)
+        loops = math.floor(n / 100)
+        left = n - loops
+        for i in range(loops):
+            await ctx.channel.purge(limit=100)
+        await ctx.channel.purge(limit=left)
+        msg = await ctx.send(f"**{num}** message{['','s'][n!=1]} deleted.")
+        await asyncio.sleep(3)
+        await msg.delete()
 
     @commands.command()
     @commands.cooldown(1, 5, commands.BucketType.user)
