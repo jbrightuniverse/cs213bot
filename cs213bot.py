@@ -150,14 +150,18 @@ async def crawl_prairielearn():
             modes = []
             not_started = False
             for mode in schedule_data:
+                if mode["start_date"]:
+                    offset = int(mode["start_date"][-1])
+                else:
+                    offset = 0
+
                 if mode["start_date"] and mode["credit"] == 100:
                     start = time.mktime(time.strptime("-".join(mode["start_date"].split("-")[:-1]), "%Y-%m-%dT%H:%M:%S"))
-                    offset = int(mode["start_date"][-1])
                     now = time.time() - offset * 60
                     if start > now: 
                         not_started = True
                         break
-
+                
                 if not mode["end_date"]: 
                     end = None
                     end_unix = 0
@@ -169,7 +173,8 @@ async def crawl_prairielearn():
                 modes.append({
                     "credit": mode["credit"],
                     "end":    end,
-                    "end_unix": end_unix
+                    "end_unix": end_unix,
+                    "offset": offset
                 })
 
             if not_started:
@@ -198,9 +203,9 @@ async def crawl_prairielearn():
                     await channel.send(embed = embed)
 
                 for mode in entry["modes"]:
-                    if mode["credit"] == 100 and mode["end"] and mode["end_unix"] - time.time() < 86400 and entry["name"] not in bot.due_tomorrow:
-                        bot.due_tomorrow.append(entry["name"])
-                        embed = discord.Embed(color = int("%x%x%x" % colormap[entry["color"]], 16), title = "CPSC 213 on PrairieLearn: Due Date Reminder", description = f"[**{['Assignment', 'Quiz'][entry['label'].startswith('Q')]} Due in 24 Hours: {entry['label']} {entry['name']}**](https://ca.prairielearn.org/pl/course_instance/2295/assessment/{entry['id']}/)")
+                    if mode["credit"] == 100 and mode["end"] and (mode["end_unix"] + 60*mode["offset"]) - time.time() < 86400 and entry["label"] + " " + entry["name"] not in bot.due_tomorrow:
+                        bot.due_tomorrow.append(entry["label"]+" "+entry["name"])
+                        embed = discord.Embed(color = int("%x%x%x" % colormap[entry["color"]], 16), title = "CPSC 213 on PrairieLearn: Due Date Reminder", description = f"[**{['Assignment', 'Quiz'][entry['label'].startswith('Q')]} Due in <24 Hours: {entry['label']} {entry['name']}**](https://ca.prairielearn.org/pl/course_instance/2295/assessment/{entry['id']}/)")
                         embed.set_footer(text = f"Due at {mode['end']}.")
                         embed.set_thumbnail(url = "https://cdn.discordapp.com/attachments/511797229913243649/803491233925169152/unknown.png")
                         await channel.send(embed = embed)
