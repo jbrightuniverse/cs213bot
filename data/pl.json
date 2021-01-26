@@ -1,0 +1,93 @@
+{
+    "Assignments": [
+        {
+            "id": 16232,
+            "color": "green1",
+            "label": "A1",
+            "name": "Numbers and Memory",
+            "modes": [
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Sat, Jan, 23",
+                    "end_unix": 1611475199.0
+                },
+                {
+                    "credit": 0,
+                    "end": "23:59 PST, Sun, Jan, 24",
+                    "end_unix": 1611561599.0
+                }
+            ]
+        },
+        {
+            "id": 16303,
+            "color": "green1",
+            "label": "A2",
+            "name": "CPU and Static Scalars and Arrays",
+            "modes": [
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Sat, Jan, 30",
+                    "end_unix": 1612079999.0
+                },
+                {
+                    "credit": 0,
+                    "end": "23:59 PST, Sun, Jan, 31",
+                    "end_unix": 1612166399.0
+                }
+            ]
+        }
+    ],
+    "Quizzes": [
+        {
+            "id": 16284,
+            "color": "pink1",
+            "label": "Q0",
+            "name": "Practice Quiz",
+            "modes": [
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Fri, Apr, 30",
+                    "end_unix": 1619852399.0
+                }
+            ]
+        },
+        {
+            "id": 16298,
+            "color": "pink1",
+            "label": "Q1-1",
+            "name": "Numbers and Memory",
+            "modes": [
+                {
+                    "credit": 100,
+                    "end": null,
+                    "end_unix": 0
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Mon, Jan, 25",
+                    "end_unix": 1611647999.0
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Mon, Jan, 25",
+                    "end_unix": 1611647999.0
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Mon, Jan, 25",
+                    "end_unix": 1611647999.0
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Mon, Jan, 25",
+                    "end_unix": 1611647999.0
+                },
+                {
+                    "credit": 0,
+                    "end": "23:59 PST, Thu, Jan, 28",
+                    "end_unix": 1611907199.0
+                }
+            ]
+        }
+    ]
+}

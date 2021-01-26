@@ -372,7 +372,7 @@ class Commands(commands.Cog):
         `!join L2A` adds the L2A role to yourself
 
         **Valid Roles:**
-        L2A, L2B, L2C, L2D, L2E, L2F, L2G, L2H, L2J, L2K, L2L, L2M, L2N, L2P, L2Q, L2R, L2S, He/Him/His, She/Her/Hers, They/Them/Theirs, Ze/Zir/Zirs
+        notify, L2A, L2B, L2C, L2D, L2E, L2F, L2G, L2H, L2J, L2K, L2L, L2M, L2N, L2P, L2Q, L2R, L2S, He/Him/His, She/Her/Hers, They/Them/Theirs, Ze/Zir/Zirs
         """
 
         # case where role name is space separated
@@ -383,7 +383,7 @@ class Commands(commands.Cog):
             raise BadArgs("", show_help=True)
 
         # make sure that you can't add roles like "prof" or "ta"
-        valid_roles = ["L2A", "L2B", "L2C", "L2D", "L2E", "L2F", "L2G", "L2H", "L2J", "L2K", "L2L", "L2M", "L2N", "L2P", "L2Q", "L2R", "L2S", "He/Him/His", "She/Her/Hers", "They/Them/Theirs", "Ze/Zir/Zirs"]
+        valid_roles = ["notify", "L2A", "L2B", "L2C", "L2D", "L2E", "L2F", "L2G", "L2H", "L2J", "L2K", "L2L", "L2M", "L2N", "L2P", "L2Q", "L2R", "L2S", "He/Him/His", "She/Her/Hers", "They/Them/Theirs", "Ze/Zir/Zirs"]
         aliases = {"he": "He/Him/His", "she": "She/Her/Hers", "ze": "Ze/Zir/Zirs", "they": "They/Them/Theirs"}
 
         # Convert alias to proper name
