@@ -21,17 +21,23 @@ class Tools(commands.Cog):
 
 
     @commands.command()
-    async def ref(self, ctx):
+    async def ref(self, ctx, links = None):
         """
         `!ref` __`Displays reference for SM213`__
 
-        **Usage:** !ref
+        **Usage:** !ref [choice]
 
         **Examples:**
         `!ref' [embed]
+        `!ref ins` [embed with instructions]
+        `!ref ex` [embed with examples]
 
         """
 
+        if links == "ins":
+            return await ctx.send("https://media.discordapp.net/attachments/752006091021484052/804239617134034984/unknown.png")
+        elif links == "ex":
+            return await ctx.send("https://media.discordapp.net/attachments/752006091021484052/804239471658795028/unknown.png")
         await ctx.send("https://media.discordapp.net/attachments/752006091021484052/804239570345787422/unknown.png\nhttps://media.discordapp.net/attachments/752006091021484052/804239617134034984/unknown.png\nhttps://media.discordapp.net/attachments/752006091021484052/804239471658795028/unknown.png")
 
 
