@@ -30,13 +30,13 @@ class Tools(commands.Cog):
         **Examples:**
         `!ref' [embed]
         `!ref ins` [embed with instructions]
-        `!ref ex` [embed with examples]
+        `!ref e` [embed with examples]
 
         """
 
         if links == "ins":
             return await ctx.send("https://media.discordapp.net/attachments/752006091021484052/804239617134034984/unknown.png")
-        elif links == "ex":
+        elif links == "e":
             return await ctx.send("https://media.discordapp.net/attachments/752006091021484052/804239471658795028/unknown.png")
         await ctx.send("https://media.discordapp.net/attachments/752006091021484052/804239570345787422/unknown.png\nhttps://media.discordapp.net/attachments/752006091021484052/804239617134034984/unknown.png\nhttps://media.discordapp.net/attachments/752006091021484052/804239471658795028/unknown.png")
 
