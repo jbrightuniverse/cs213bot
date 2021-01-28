@@ -16,9 +16,6 @@
 ## sm213: other
 
 **Long-Term:**
-- [ ] integrated reference for the sm213 language
-     * - [ ] command for accessing docs for an instruction
-     * - [ ] sample programs?
 
 ## tools
 
@@ -60,3 +57,4 @@
      * - [X] fix invalid instruction at the end of `ins`
 - [X] better way of explaining the two different modes
 - [X] add infinite loop cancellation command
+- [X] integrated reference for the sm213 language

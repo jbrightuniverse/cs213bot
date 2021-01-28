@@ -99,6 +99,44 @@
                     "offset": 8
                 }
             ]
+        },
+        {
+            "id": 16311,
+            "color": "pink1",
+            "label": "Q1-2",
+            "name": "Numbers and Memory (Second Attempt)",
+            "modes": [
+                {
+                    "credit": 100,
+                    "end": null,
+                    "end_unix": 0,
+                    "offset": 0
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Thu, Jan, 28",
+                    "end_unix": 1611907199.0,
+                    "offset": 8
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Thu, Jan, 28",
+                    "end_unix": 1611907199.0,
+                    "offset": 8
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Thu, Jan, 28",
+                    "end_unix": 1611907199.0,
+                    "offset": 8
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Thu, Jan, 28",
+                    "end_unix": 1611907199.0,
+                    "offset": 8
+                }
+            ]
         }
     ]
 }

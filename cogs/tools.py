@@ -19,6 +19,23 @@ class Tools(commands.Cog):
         self.dchannels = []
         self.inquiz = []
 
+
+    @commands.command()
+    async def ref(self, ctx):
+        """
+        `!ref` __`Displays reference for SM213`__
+
+        **Usage:** !ref
+
+        **Examples:**
+        `!ref' [embed]
+
+        """
+
+        await ctx.send("https://media.discordapp.net/attachments/752006091021484052/804239570345787422/unknown.png\nhttps://media.discordapp.net/attachments/752006091021484052/804239617134034984/unknown.png\nhttps://media.discordapp.net/attachments/752006091021484052/804239471658795028/unknown.png")
+
+
+
     @commands.command()
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def endian(self, ctx):
@@ -34,6 +51,7 @@ class Tools(commands.Cog):
         \*Explicit expressions can only be used by TAs. Students when using this command will be provided with random results.
         """
         if ctx.author.id in self.inquiz: return await ctx.send("Oops! Can't use this when using `!quiz`.")
+
 
         role = discord.utils.get(ctx.guild.roles, name="TA")
         role2 = discord.utils.get(ctx.guild.roles, name="Prof/Staff")

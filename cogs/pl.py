@@ -18,6 +18,16 @@ class PrairieLearn(commands.Cog):
 
     @commands.command()
     async def assign(self, ctx, current = None):
+        """
+        `!assign` __`Displays PL assignments for CPSC 213`__
+
+        **Usage:** !assign [current]
+
+        **Examples:**
+        `!assign` [embed]
+        `!assign current` [embed of current assignments only]
+
+        """
         embed = discord.Embed(title = f"{['All', 'Current '][current == 'current']} Assessments on CPSC 213 PrairieLearn", description = f"Requested by {ctx.author}", color = 0x8effc1)
         for assigntype in self.bot.pl_dict:
             entrylist = self.bot.pl_dict[assigntype]
