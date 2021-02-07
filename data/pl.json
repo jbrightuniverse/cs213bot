@@ -39,6 +39,26 @@
                     "offset": 8
                 }
             ]
+        },
+        {
+            "id": 16313,
+            "color": "green1",
+            "label": "A3",
+            "name": "Static Variables and C Pointers",
+            "modes": [
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Sat, Feb, 06",
+                    "end_unix": 1612684799.0,
+                    "offset": 8
+                },
+                {
+                    "credit": 0,
+                    "end": "23:59 PST, Sun, Feb, 07",
+                    "end_unix": 1612771199.0,
+                    "offset": 8
+                }
+            ]
         }
     ],
     "Quizzes": [
@@ -97,6 +117,12 @@
                     "end": "23:59 PST, Thu, Jan, 28",
                     "end_unix": 1611907199.0,
                     "offset": 8
+                },
+                {
+                    "credit": 0,
+                    "end": null,
+                    "end_unix": 0,
+                    "offset": 8
                 }
             ]
         },
@@ -134,6 +160,138 @@
                     "credit": 100,
                     "end": "23:59 PST, Thu, Jan, 28",
                     "end_unix": 1611907199.0,
+                    "offset": 8
+                },
+                {
+                    "credit": 0,
+                    "end": null,
+                    "end_unix": 0,
+                    "offset": 8
+                }
+            ]
+        },
+        {
+            "id": 16320,
+            "color": "pink1",
+            "label": "Q2-1",
+            "name": "CPU and Static Scalars and Arrays",
+            "modes": [
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Mon, Feb, 01",
+                    "end_unix": 1612252799.0,
+                    "offset": 8
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Mon, Feb, 01",
+                    "end_unix": 1612252799.0,
+                    "offset": 8
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Mon, Feb, 01",
+                    "end_unix": 1612252799.0,
+                    "offset": 8
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Mon, Feb, 01",
+                    "end_unix": 1612252799.0,
+                    "offset": 8
+                },
+                {
+                    "credit": 0,
+                    "end": "23:59 PST, Thu, Feb, 04",
+                    "end_unix": 1612511999.0,
+                    "offset": 8
+                },
+                {
+                    "credit": 0,
+                    "end": null,
+                    "end_unix": 0,
+                    "offset": 8
+                }
+            ]
+        },
+        {
+            "id": 16322,
+            "color": "pink1",
+            "label": "Q2-2",
+            "name": "CPU and Static Scalars and Arrays (Second Attempt)",
+            "modes": [
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Thu, Feb, 04",
+                    "end_unix": 1612511999.0,
+                    "offset": 8
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Thu, Feb, 04",
+                    "end_unix": 1612511999.0,
+                    "offset": 8
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Thu, Feb, 04",
+                    "end_unix": 1612511999.0,
+                    "offset": 8
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Thu, Feb, 04",
+                    "end_unix": 1612511999.0,
+                    "offset": 8
+                },
+                {
+                    "credit": 0,
+                    "end": null,
+                    "end_unix": 0,
+                    "offset": 8
+                }
+            ]
+        },
+        {
+            "id": 16338,
+            "color": "pink1",
+            "label": "Q3-1",
+            "name": "Static Variables and C Pointers",
+            "modes": [
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Mon, Feb, 08",
+                    "end_unix": 1612857599.0,
+                    "offset": 8
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Mon, Feb, 08",
+                    "end_unix": 1612857599.0,
+                    "offset": 8
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Mon, Feb, 08",
+                    "end_unix": 1612857599.0,
+                    "offset": 8
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Mon, Feb, 08",
+                    "end_unix": 1612857599.0,
+                    "offset": 8
+                },
+                {
+                    "credit": 0,
+                    "end": "23:59 PST, Thu, Feb, 11",
+                    "end_unix": 1613116799.0,
+                    "offset": 8
+                },
+                {
+                    "credit": 0,
+                    "end": null,
+                    "end_unix": 0,
                     "offset": 8
                 }
             ]

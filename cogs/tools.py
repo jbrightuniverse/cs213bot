@@ -40,7 +40,47 @@ class Tools(commands.Cog):
             return await ctx.send("https://media.discordapp.net/attachments/752006091021484052/804239471658795028/unknown.png")
         await ctx.send("https://media.discordapp.net/attachments/752006091021484052/804239570345787422/unknown.png\nhttps://media.discordapp.net/attachments/752006091021484052/804239617134034984/unknown.png\nhttps://media.discordapp.net/attachments/752006091021484052/804239471658795028/unknown.png")
 
+    @commands.command()
+    async def faq(self, ctx):
+        """
+        `!faq` __`Displays FAQ for SM213`__
 
+        **Usage:** !faq
+        """
+        desc = [
+            "Q: What are these `.s` files for?",
+            "A: for sm213 assembly language are `.s` files.",
+            "These are composed of two components: instructions and memory."
+                """```avrasm
+                    .pos 0x100
+                        ld   $0x0, r0            # r0 = 0
+                        ld   $a, r1              # r1 = &a
+                        st   r0, 0x0(r1)         # a = 0
+                        ld   $b, r0              # r0 = &b
+                        ld   $0x5, r2            # r2 = 5
+                        ld   0x0(r1), r3         # r3 = a
+                        st   r3, (r0, r2, 4)     # b[5] = a
+                        halt                     # halt
+
+                    .pos 0x1000
+                    a:              .long 0xffffffff         # a
+                    .pos 0x2000
+                    b:              .long 0xffffffff         # b[0]
+                                    .long 0xffffffff         # b[1]
+                                    .long 0xffffffff         # b[2]
+                                    .long 0xffffffff         # b[3]
+                                    .long 0xffffffff         # b[4]
+                                    .long 0xffffffff         # b[5]
+                                    .long 0xffffffff         # b[6]
+                                    .long 0xffffffff         # b[7]
+                                    .long 0xffffffff         # b[8]
+                                    .long 0xffffffff         # b[9]
+                    ```""",
+            "`.pos` declares an **address in memory**. For example, if you typed `.pos 0x100`, the next lines would be written in memory at address 0x100.",
+            "`a` and `b` are labels. These are like the names you give global variables in C. When you read them into registers, the labels correspond to an **address** in memory, not the value.",
+        ]
+        await ctx.send("**FREQUENTLY ASKED QUESTIONS**\n"+"\n".join(desc))
+        await ctx.send(embed = embed)
 
     @commands.command()
     @commands.cooldown(1, 5, commands.BucketType.user)

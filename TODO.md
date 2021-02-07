@@ -9,7 +9,6 @@
      * - [ ] prevent labels from triggering invalid instruction when written
 - [ ] support assignments of static variables in memory with `.long`
 - [ ] support integrated usage of `.pos`
-- [ ] syscalls
 
 **Long-Term:**
 
@@ -58,3 +57,4 @@
 - [X] better way of explaining the two different modes
 - [X] add infinite loop cancellation command
 - [X] integrated reference for the sm213 language
+- [X] syscalls

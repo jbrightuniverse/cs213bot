@@ -53,6 +53,12 @@ class SM213(commands.Cog):
         MEMORY_SIZE = 2**16
         NUM_REGISTERS = 8
 
+        """
+        for future expansion:
+            if adding more syscalls, store the result of the syscall in r0
+
+        """
+
 
         # initialize main memory and primary registers
         memory = np.zeros((MEMORY_SIZE,), dtype = np.uint8)
@@ -299,7 +305,7 @@ async def special_commands(ctx, command, memory, registers, should_execute, memp
 
             # add bytecode
             for i in range(2, len(instructions)):
-                if bytecode[i - 2] == "0000": 
+                if bytecode[i - 2] == "0000" or bytecode[i-2] == "00000000": 
                     del instructions[i]
                     break
                 instructions[i] = instructions[i].ljust(20) + " | " + bytecode[i - 2]
