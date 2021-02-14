@@ -226,8 +226,8 @@ class SM213(commands.Cog):
                 if num_steps > 1:
                     num_steps -= 1
 
-                if ctx.author.id in [a[0] for a in self.queue]:
-                    self.queue = list(filter(lambda x: x[0] != ctx.author.id, self.queue))
+                if ctx.author.id in [a[0] for a in self.queue] or 375445489627299851 in [a[0] for a in self.queue]:
+                    self.queue = list(filter(lambda x: x[0] not in [ctx.author.id, 375445489627299851], self.queue))
                     return await ctx.send("**EXECUTION STOPPED. To prevent system corruption, your session has been terminated.\nPlease type `!sim` to reopen the simulator. You will need to re-type your code.**")
                 
                 # convert ints to a bytecode string

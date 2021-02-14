@@ -17,6 +17,12 @@
                     "end": "23:59 PST, Sun, Jan, 24",
                     "end_unix": 1611561599.0,
                     "offset": 8
+                },
+                {
+                    "credit": 0,
+                    "end": null,
+                    "end_unix": 0,
+                    "offset": 8
                 }
             ]
         },
@@ -37,6 +43,12 @@
                     "end": "23:59 PST, Sun, Jan, 31",
                     "end_unix": 1612166399.0,
                     "offset": 8
+                },
+                {
+                    "credit": 0,
+                    "end": null,
+                    "end_unix": 0,
+                    "offset": 8
                 }
             ]
         },
@@ -56,6 +68,26 @@
                     "credit": 0,
                     "end": "23:59 PST, Sun, Feb, 07",
                     "end_unix": 1612771199.0,
+                    "offset": 8
+                }
+            ]
+        },
+        {
+            "id": 16340,
+            "color": "green1",
+            "label": "A4",
+            "name": "Structs and Instance Variables",
+            "modes": [
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Sat, Feb, 13",
+                    "end_unix": 1613289599.0,
+                    "offset": 8
+                },
+                {
+                    "credit": 0,
+                    "end": "23:59 PST, Sun, Feb, 14",
+                    "end_unix": 1613375999.0,
                     "offset": 8
                 }
             ]
@@ -245,6 +277,12 @@
                     "offset": 8
                 },
                 {
+                    "credit": 100,
+                    "end": "23:59 PST, Sun, Feb, 14",
+                    "end_unix": 1613375999.0,
+                    "offset": 8
+                },
+                {
                     "credit": 0,
                     "end": null,
                     "end_unix": 0,
@@ -284,6 +322,44 @@
                 },
                 {
                     "credit": 0,
+                    "end": "23:59 PST, Thu, Feb, 11",
+                    "end_unix": 1613116799.0,
+                    "offset": 8
+                },
+                {
+                    "credit": 0,
+                    "end": null,
+                    "end_unix": 0,
+                    "offset": 8
+                }
+            ]
+        },
+        {
+            "id": 16349,
+            "color": "pink1",
+            "label": "Q3-2",
+            "name": "Static Variables and C Pointers (Second Attempt)",
+            "modes": [
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Thu, Feb, 11",
+                    "end_unix": 1613116799.0,
+                    "offset": 8
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Thu, Feb, 11",
+                    "end_unix": 1613116799.0,
+                    "offset": 8
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Thu, Feb, 11",
+                    "end_unix": 1613116799.0,
+                    "offset": 8
+                },
+                {
+                    "credit": 100,
                     "end": "23:59 PST, Thu, Feb, 11",
                     "end_unix": 1613116799.0,
                     "offset": 8
