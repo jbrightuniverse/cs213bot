@@ -204,7 +204,11 @@ class SM213(commands.Cog):
                         # add some formatted spacing
                         instructions.append(working_commands[i].ljust(20) + " | " + bytecodes[i])
 
-                    await ctx.send("\n".join(instructions + ["```"]))
+                    msg = "\n".join(instructions + ["```"])
+                    if len(msg) < 2000:
+                        await ctx.send(msg)
+                    else:
+                        await ctx.send("Message too long.")
             elif should_execute or should_tick or num_steps > 1:
                 # ping if the execution is taking awhile
                 if should_ping_time and current_time > start_time + 1:
@@ -258,20 +262,27 @@ class SM213(commands.Cog):
                 icache = {}
 
 def recompile_undefined_labels(memory, labels, undefined_labels):
+    new_labels = {}
     for pc in undefined_labels.keys():
-        instruction = read_from_mem(memory, pc)
-        opcode = int(hex(instruction[0])[2:3], 16)
-        reg = int(hex(instruction[0])[3:4], 16)
+        if undefined_labels[pc] in labels:
+            instruction = read_from_mem(memory, pc)
+            opcode = int(hex(instruction[0])[2:].zfill(4)[0], 16)
+            reg = int(hex(instruction[0])[2:].zfill(4)[1], 16)
 
-        if opcode in [8, 9, 10]:
-            op1, op2 = get_hexits(to_signed((labels[undefined_labels[pc]] - pc)//2, 8))
-            if opcode == 8:
-                reg = 0
-            write_to_mem(compress_bytes(opcode, reg, op1, op2), memory, pc)
-        elif opcode == 11:
-            write_to_mem(compress_bytes(opcode, 0, 0, 0, read_num(hex(labels[undefined_labels[pc]]))), memory, pc)
+            if opcode in [8, 9, 10]:
+                op1, op2 = get_hexits(to_signed((labels[undefined_labels[pc]] - pc)//2, 8))
+                if opcode == 8:
+                    reg = 0
+                write_to_mem(compress_bytes(opcode, reg, op1, op2), memory, pc)
+            elif opcode == 11:
+                write_to_mem(compress_bytes(opcode, 0, 0, 0, read_num(hex(labels[undefined_labels[pc]]))), memory, pc)
+            elif opcode == 0:
+                write_to_mem(compress_bytes(opcode, reg, 0, 0, labels[undefined_labels[pc]]), memory, pc)
+        else:
+            new_labels[pc] = undefined_labels[pc]
         
     undefined_labels.clear()
+    undefined_labels.update(new_labels)
 
 def elements_equal(list1, list2):
     return all(list(map(lambda x, y: x == y, list1, list2)))
@@ -698,8 +709,22 @@ def get_bytes_from_ins(command, memptr, labels, undefined_labels, MEMORY_SIZE):
         # load
         if len(operands) == 2 and "(" not in operands[0]:
             # load immediate: 0d--vvvvvvvv 
-            # e.g. ld $0x100, r0
-            return compress_bytes(0, reg(operands[1]), 0, 0, read_num(operands[0]))
+            num = 0
+            try:
+				# load immediate, e.g. ld $0x100, r0
+                num = read_num(operands[0])
+            except:
+				# load label, e.g. ld a, r0
+                if operands[0] in labels:
+					# label is defined
+                    num = labels[operands[0]]
+                else:
+					# label is defined later
+                    num = 0
+                    undefined_labels[memptr] = operands[0]
+    
+            dat = compress_bytes(0, reg(operands[1]), 0, 0, num)
+            return dat
             
         elif len(operands) == 2 and "(" in operands[0] and operands[0][-1] == ")":
             # load base + distance: 1psd
@@ -813,7 +838,7 @@ def get_bytes_from_ins(command, memptr, labels, undefined_labels, MEMORY_SIZE):
         if "0x" in operands[1]:
             # e.g. beq r0, 0x1000
             pp = to_signed((read_num(operands[1]) - memptr)//2, 8)
-        elif operands[1] in labels.keys():
+        elif operands[1] in labels:
             # e.g. beq r0, func
             # label is already defined
             pp = to_signed((labels[operands[1]] - memptr)//2, 8)
