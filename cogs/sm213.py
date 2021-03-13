@@ -50,7 +50,8 @@ class SM213(commands.Cog):
 
         Run the command and type `help` for more detailed specs.
         """
-        MEMORY_SIZE = 2**16
+        FILENAME = "/dev/zero"
+        MEMORY_SIZE = 2**24
         NUM_REGISTERS = 8
 
         """
@@ -61,7 +62,7 @@ class SM213(commands.Cog):
 
 
         # initialize main memory and primary registers
-        memory = np.zeros((MEMORY_SIZE,), dtype = np.uint8)
+        memory = np.memmap(FILENAME, dtype=np.uint8, mode="c", shape=(MEMORY_SIZE,))
         registers = np.zeros((NUM_REGISTERS,), dtype = np.uint32)
         
         # special registers for instruction feedback
@@ -275,7 +276,7 @@ def recompile_undefined_labels(memory, labels, undefined_labels):
                     reg = 0
                 write_to_mem(compress_bytes(opcode, reg, op1, op2), memory, pc)
             elif opcode == 11:
-                write_to_mem(compress_bytes(opcode, 0, 0, 0, read_num(hex(labels[undefined_labels[pc]]))), memory, pc)
+                write_to_mem(compress_bytes(opcode, 0, 0, 0, labels[undefined_labels[pc]]), memory, pc)
             elif opcode == 0:
                 write_to_mem(compress_bytes(opcode, reg, 0, 0, labels[undefined_labels[pc]]), memory, pc)
         else:
@@ -456,11 +457,6 @@ def get_ins_back(splreg):
         first += hex(splreg["insOpExt"])[2:].zfill(8)
 
     return first
-
-
-def read_num(val): 
-    # remove the $ from number input syntax and auto-convert to base 10
-    return int(val.replace("$", ""), 0)
 
 def reg(r):
     # remove the r from r# register syntax
@@ -712,7 +708,7 @@ def get_bytes_from_ins(command, memptr, labels, undefined_labels, MEMORY_SIZE):
             num = 0
             try:
                 # load immediate, e.g. ld $0x100, r0
-                num = read_num(operands[0])
+                num = int(operands[0], 0)
             except:
                 # load label, e.g. ld a, r0
                 if operands[0] in labels:
@@ -802,7 +798,7 @@ def get_bytes_from_ins(command, memptr, labels, undefined_labels, MEMORY_SIZE):
     elif instruction == "shl" and len(operands) == 2:
         # shl: 7dvv
         # e.g. shl $2, r0
-        op1, op2 = get_hexits(read_num(operands[0]))
+        op1, op2 = get_hexits(int(operands[0], 0))
         return compress_bytes(7, reg(operands[1]), op1, op2)
 
     elif instruction == "shr" and len(operands) == 2:
@@ -816,7 +812,7 @@ def get_bytes_from_ins(command, memptr, labels, undefined_labels, MEMORY_SIZE):
         # branch: 8-pp
         if "0x" in operands[0]:
             # e.g. br 0x1000
-            pp = to_signed((read_num(operands[0]) - memptr)//2, 8)
+            pp = to_signed((int(operands[0], 0) - memptr)//2, 8)
         elif operands[0] in labels.keys():
             # e.g. br func
             # label is already defined
@@ -833,7 +829,7 @@ def get_bytes_from_ins(command, memptr, labels, undefined_labels, MEMORY_SIZE):
         # branch if equal: 9spp
         if "0x" in operands[1]:
             # e.g. beq r0, 0x1000
-            pp = to_signed((read_num(operands[1]) - memptr)//2, 8)
+            pp = to_signed((int(operands[1], 0) - memptr)//2, 8)
         elif operands[1] in labels:
             # e.g. beq r0, func
             # label is already defined
@@ -850,7 +846,7 @@ def get_bytes_from_ins(command, memptr, labels, undefined_labels, MEMORY_SIZE):
         # branch if greater: Aspp
         if "0x" in operands[1]:
         # e.g. bgt r0, 0x1000
-            pp = to_signed((read_num(operands[1]) - memptr)//2, 8)
+            pp = to_signed((int(operands[1], 0) - memptr)//2, 8)
         elif operands[1] in labels.keys():
             # e.g. bgt r0, func
             # label is already defined
@@ -866,13 +862,13 @@ def get_bytes_from_ins(command, memptr, labels, undefined_labels, MEMORY_SIZE):
     elif instruction == "gpc" and len(operands) == 2:
         # get pc: 6Fpd
         # e.g. gpc $6, r6
-        return compress_bytes(6, 15, read_num(operands[0])//2, reg(operands[1]))
+        return compress_bytes(6, 15, int(operands[0], 0)//2, reg(operands[1]))
 
     elif instruction == "sys" and len(operands) == 1:
         # syscall: F1nn
         # e.g. sys $2
         # TEMPORARILY ONLY SUPPORTS SINGLE DIGIT SYSCALLS
-        return compress_bytes(15, 1, 0, read_num(operands[0]))
+        return compress_bytes(15, 1, 0, int(operands[0], 0))
     
     elif instruction == "j":
         # jump
@@ -881,7 +877,7 @@ def get_bytes_from_ins(command, memptr, labels, undefined_labels, MEMORY_SIZE):
                 # jump immediate: B--- aaaaaaaa
                 if "0x" in operands[0]:
                     # e.g. j 0x1000
-                    num = read_num(operands[0])
+                    num = int(operands[0], 0)
                 elif operands[0] in labels.keys():
                     # e.g. j func
                     # label is already defined
@@ -925,7 +921,7 @@ def get_bytes_from_ins(command, memptr, labels, undefined_labels, MEMORY_SIZE):
     elif instruction == ".long":
         longs = []
         for op in operands:
-            longs.extend(read_num(operands[0]).to_bytes(4, "big"))
+            longs.extend(int(operands[0], 0).to_bytes(4, "big"))
         return longs
 
     return []
@@ -954,11 +950,11 @@ def get_offset_reg(operand):
     """
 
     basedata = operand.split("(") # find first bracket
-    if basedata[0] == "": 
+    if not basedata[0]: 
         # we support a blank instead of a zero for no-offset storage
         offset = 0
     else:
-        offset = read_num(basedata[0])
+        offset = int(basedata[0], 0)
 
     # the second bracket should be at the end of the other half of the split
     register = reg(basedata[1][:-1])
@@ -979,9 +975,9 @@ def compress_bytes(opcode, op0, op1, op2, value = None):
     if value != None: # account for zero
         # add bytecode extension if large immediate value present
         if value < 0: # support signed values
-			myslice.extend(int(value).to_bytes(4, "big", signed=True))
-		else: # support unsigned values
-			myslice.extend(int(value).to_bytes(4, "big"))
+            myslice.extend(int(value).to_bytes(4, "big", signed=True))
+        else: # support unsigned values
+            myslice.extend(int(value).to_bytes(4, "big"))
 
     return myslice
 
