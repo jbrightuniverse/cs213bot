@@ -103,7 +103,7 @@ class SM213(commands.Cog):
             if ticker % 256 == 0:
                 await asyncio.sleep(0)
             ticker += 1
-            if (not should_execute or memptr == splreg["PC"]) and not should_tick and num_steps == 1:
+            if ((not should_execute or memptr == splreg["PC"]) and not should_tick and num_steps == 1) or undefined_labels:
                 icache = {}
 
                 # check if last execution has finished and a ping was sent
@@ -209,7 +209,7 @@ class SM213(commands.Cog):
                         await ctx.send(msg)
                     else:
                         await ctx.send("Message too long.")
-            elif should_execute or should_tick or num_steps > 1:
+            elif (should_execute or should_tick or num_steps > 1) and not undefined_labels:
                 # ping if the execution is taking awhile
                 if should_ping_time and current_time > start_time + 1:
                     await ctx.send("```Execution still in progress, please wait...type CANCEL to exit...```")
@@ -702,7 +702,7 @@ def get_bytes_from_ins(command, memptr, labels, undefined_labels, MEMORY_SIZE):
     # read the instruction string and split the name from the operands
     instruction = command[0]
     data = "".join(command[1:])
-    operands = data.split(",")
+    operands = [x.replace("$", "") for x in data.split(",")] # Remove leading $
 
     # read the instruction name
     if instruction == "ld": 
@@ -711,21 +711,17 @@ def get_bytes_from_ins(command, memptr, labels, undefined_labels, MEMORY_SIZE):
             # load immediate: 0d--vvvvvvvv 
             num = 0
             try:
-				# load immediate, e.g. ld $0x100, r0
+                # load immediate, e.g. ld $0x100, r0
                 num = read_num(operands[0])
             except:
-				# load label, e.g. ld a, r0
+                # load label, e.g. ld a, r0
                 if operands[0] in labels:
-					# label is defined
+                    # label is defined
                     num = labels[operands[0]]
                 else:
-					# label is defined later
-                    num = 0
+                    # label is defined later
                     undefined_labels[memptr] = operands[0]
-    
-            dat = compress_bytes(0, reg(operands[1]), 0, 0, num)
-            return dat
-            
+            return compress_bytes(0, reg(operands[1]), 0, 0, num)
         elif len(operands) == 2 and "(" in operands[0] and operands[0][-1] == ")":
             # load base + distance: 1psd
             # e.g. ld 4(r0), r1
@@ -886,7 +882,6 @@ def get_bytes_from_ins(command, memptr, labels, undefined_labels, MEMORY_SIZE):
                 if "0x" in operands[0]:
                     # e.g. j 0x1000
                     num = read_num(operands[0])
-                    print(num)
                 elif operands[0] in labels.keys():
                     # e.g. j func
                     # label is already defined
@@ -983,7 +978,10 @@ def compress_bytes(opcode, op0, op1, op2, value = None):
     myslice = [(opcode << 4) + op0, (op1 << 4) + op2]
     if value != None: # account for zero
         # add bytecode extension if large immediate value present
-        myslice.extend(int(value).to_bytes(4, "big"))
+        if value < 0: # support signed values
+			myslice.extend(int(value).to_bytes(4, "big", signed=True))
+		else: # support unsigned values
+			myslice.extend(int(value).to_bytes(4, "big"))
 
     return myslice
 
