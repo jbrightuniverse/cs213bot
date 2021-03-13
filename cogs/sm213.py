@@ -902,21 +902,22 @@ def get_bytes_from_ins(command, memptr, labels, undefined_labels, MEMORY_SIZE):
         # label setter
         labels[instruction[:len(instruction) - 1]] = memptr
         return []
-
+    elif instruction == ".long":
+        longs = []
+        for op in operands:
+            longs.extend(read_num(operands[0]).to_bytes(4, "big"))
+        return longs
 
     return []
-
 
 def get_hexits(val):
     """
     converts a byte into a pair of hexits
     """
 
-    # convert to hex, buffer to 2 digits, remove the 0x
-    hexit_pair = hex(val)[2:].zfill(2) 
-    # get integers back
-    return int(hexit_pair[0], 16), int(hexit_pair[1], 16)
-
+    # For upper hexit, divide by 16
+    # For lower hexit, and with the bitmask 0x0F, which is 0b00001111
+    return val // 16, val & 0x0F
 
 def compile_byte(val1, val2):
     """
@@ -952,17 +953,14 @@ def compress_bytes(opcode, op0, op1, op2, value = None):
     # convert integer values to compressed hex
     # this takes the hex values (guaranteed to be single character as each input is a single hexit), without the 0x, 
     # and puts them side by side
-    hex1 = hex(opcode)[2:] + hex(op0)[2:]
-    hex2 = hex(op1)[2:] + hex(op2)[2:]
 
     # start array
-    myslice = [int(hex1, 16), int(hex2, 16)]
+    myslice = [(opcode << 4) + op0, (op1 << 4) + op2]
     if value != None: # account for zero
         # add bytecode extension if large immediate value present
-        myslice += list(int(value).to_bytes(4, "big"))
-    
-    return myslice
+        myslice.extend(int(value).to_bytes(4, "big"))
 
+    return myslice
 
 def bytes_to_assembly(strn, pc, lastpc):
     """
