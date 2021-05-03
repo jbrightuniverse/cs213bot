@@ -40,28 +40,24 @@ class SM213(commands.Cog):
     async def sim(self, ctx, debug = None):
         """
         `!sim` __`Launch SM213 simulator`__
-
         **Usage:** !sim
-
         **Examples:** `!sim` launches simulator
-
         The sm213 language was created by Dr. Mike Feeley of the CPSC department at UBCV. 
         Used with permission.
-
         Run the command and type `help` for more detailed specs.
         """
-        MEMORY_SIZE = 2**16
+        FILENAME = "/dev/zero"
+        MEMORY_SIZE = 2**24
         NUM_REGISTERS = 8
 
         """
         for future expansion:
             if adding more syscalls, store the result of the syscall in r0
-
         """
 
 
         # initialize main memory and primary registers
-        memory = np.zeros((MEMORY_SIZE,), dtype = np.uint8)
+        memory = np.memmap(FILENAME, dtype=np.uint8, mode="c", shape=(MEMORY_SIZE,))
         registers = np.zeros((NUM_REGISTERS,), dtype = np.uint32)
         
         # special registers for instruction feedback
@@ -103,7 +99,7 @@ class SM213(commands.Cog):
             if ticker % 256 == 0:
                 await asyncio.sleep(0)
             ticker += 1
-            if (not should_execute or memptr == splreg["PC"]) and not should_tick and num_steps == 1:
+            if ((not should_execute or memptr == splreg["PC"]) and not should_tick and num_steps == 1) or undefined_labels:
                 icache = {}
 
                 # check if last execution has finished and a ping was sent
@@ -204,8 +200,12 @@ class SM213(commands.Cog):
                         # add some formatted spacing
                         instructions.append(working_commands[i].ljust(20) + " | " + bytecodes[i])
 
-                    await ctx.send("\n".join(instructions + ["```"]))
-            elif should_execute or should_tick or num_steps > 1:
+                    msg = "\n".join(instructions + ["```"])
+                    if len(msg) < 2000:
+                        await ctx.send(msg)
+                    else:
+                        await ctx.send("Message too long.")
+            elif (should_execute or should_tick or num_steps > 1) and not undefined_labels:
                 # ping if the execution is taking awhile
                 if should_ping_time and current_time > start_time + 1:
                     await ctx.send("```Execution still in progress, please wait...type CANCEL to exit...```")
@@ -258,20 +258,27 @@ class SM213(commands.Cog):
                 icache = {}
 
 def recompile_undefined_labels(memory, labels, undefined_labels):
+    new_labels = {}
     for pc in undefined_labels.keys():
-        instruction = read_from_mem(memory, pc)
-        opcode = int(hex(instruction[0])[2:3], 16)
-        reg = int(hex(instruction[0])[3:4], 16)
+        if undefined_labels[pc] in labels:
+            instruction = read_from_mem(memory, pc)
+            opcode = int(hex(instruction[0])[2:].zfill(4)[0], 16)
+            reg = int(hex(instruction[0])[2:].zfill(4)[1], 16)
 
-        if opcode in [8, 9, 10]:
-            op1, op2 = get_hexits(to_signed((labels[undefined_labels[pc]] - pc)//2, 8))
-            if opcode == 8:
-                reg = 0
-            write_to_mem(compress_bytes(opcode, reg, op1, op2), memory, pc)
-        elif opcode == 11:
-            write_to_mem(compress_bytes(opcode, 0, 0, 0, read_num(hex(labels[undefined_labels[pc]]))), memory, pc)
+            if opcode in [8, 9, 10]:
+                op1, op2 = get_hexits(to_signed((labels[undefined_labels[pc]] - pc)//2, 8))
+                if opcode == 8:
+                    reg = 0
+                write_to_mem(compress_bytes(opcode, reg, op1, op2), memory, pc)
+            elif opcode == 11:
+                write_to_mem(compress_bytes(opcode, 0, 0, 0, labels[undefined_labels[pc]]), memory, pc)
+            elif opcode == 0:
+                write_to_mem(compress_bytes(opcode, reg, 0, 0, labels[undefined_labels[pc]]), memory, pc)
+        else:
+            new_labels[pc] = undefined_labels[pc]
         
     undefined_labels.clear()
+    undefined_labels.update(new_labels)
 
 def elements_equal(list1, list2):
     return all(list(map(lambda x, y: x == y, list1, list2)))
@@ -445,11 +452,6 @@ def get_ins_back(splreg):
         first += hex(splreg["insOpExt"])[2:].zfill(8)
 
     return first
-
-
-def read_num(val): 
-    # remove the $ from number input syntax and auto-convert to base 10
-    return int(val.replace("$", ""), 0)
 
 def reg(r):
     # remove the r from r# register syntax
@@ -691,16 +693,26 @@ def get_bytes_from_ins(command, memptr, labels, undefined_labels, MEMORY_SIZE):
     # read the instruction string and split the name from the operands
     instruction = command[0]
     data = "".join(command[1:])
-    operands = data.split(",")
+    operands = [x.replace("$", "") for x in data.split(",")] # Remove leading $
 
     # read the instruction name
     if instruction == "ld": 
         # load
         if len(operands) == 2 and "(" not in operands[0]:
             # load immediate: 0d--vvvvvvvv 
-            # e.g. ld $0x100, r0
-            return compress_bytes(0, reg(operands[1]), 0, 0, read_num(operands[0]))
-            
+            num = 0
+            try:
+                # load immediate, e.g. ld $0x100, r0
+                num = int(operands[0], 0)
+            except:
+                # load label, e.g. ld a, r0
+                if operands[0] in labels:
+                    # label is defined
+                    num = labels[operands[0]]
+                else:
+                    # label is defined later
+                    undefined_labels[memptr] = operands[0]
+            return compress_bytes(0, reg(operands[1]), 0, 0, num)
         elif len(operands) == 2 and "(" in operands[0] and operands[0][-1] == ")":
             # load base + distance: 1psd
             # e.g. ld 4(r0), r1
@@ -781,7 +793,7 @@ def get_bytes_from_ins(command, memptr, labels, undefined_labels, MEMORY_SIZE):
     elif instruction == "shl" and len(operands) == 2:
         # shl: 7dvv
         # e.g. shl $2, r0
-        op1, op2 = get_hexits(read_num(operands[0]))
+        op1, op2 = get_hexits(int(operands[0], 0))
         return compress_bytes(7, reg(operands[1]), op1, op2)
 
     elif instruction == "shr" and len(operands) == 2:
@@ -795,7 +807,7 @@ def get_bytes_from_ins(command, memptr, labels, undefined_labels, MEMORY_SIZE):
         # branch: 8-pp
         if "0x" in operands[0]:
             # e.g. br 0x1000
-            pp = to_signed((read_num(operands[0]) - memptr)//2, 8)
+            pp = to_signed((int(operands[0], 0) - memptr)//2, 8)
         elif operands[0] in labels.keys():
             # e.g. br func
             # label is already defined
@@ -812,8 +824,8 @@ def get_bytes_from_ins(command, memptr, labels, undefined_labels, MEMORY_SIZE):
         # branch if equal: 9spp
         if "0x" in operands[1]:
             # e.g. beq r0, 0x1000
-            pp = to_signed((read_num(operands[1]) - memptr)//2, 8)
-        elif operands[1] in labels.keys():
+            pp = to_signed((int(operands[1], 0) - memptr)//2, 8)
+        elif operands[1] in labels:
             # e.g. beq r0, func
             # label is already defined
             pp = to_signed((labels[operands[1]] - memptr)//2, 8)
@@ -829,7 +841,7 @@ def get_bytes_from_ins(command, memptr, labels, undefined_labels, MEMORY_SIZE):
         # branch if greater: Aspp
         if "0x" in operands[1]:
         # e.g. bgt r0, 0x1000
-            pp = to_signed((read_num(operands[1]) - memptr)//2, 8)
+            pp = to_signed((int(operands[1], 0) - memptr)//2, 8)
         elif operands[1] in labels.keys():
             # e.g. bgt r0, func
             # label is already defined
@@ -845,13 +857,13 @@ def get_bytes_from_ins(command, memptr, labels, undefined_labels, MEMORY_SIZE):
     elif instruction == "gpc" and len(operands) == 2:
         # get pc: 6Fpd
         # e.g. gpc $6, r6
-        return compress_bytes(6, 15, read_num(operands[0])//2, reg(operands[1]))
+        return compress_bytes(6, 15, int(operands[0], 0)//2, reg(operands[1]))
 
     elif instruction == "sys" and len(operands) == 1:
         # syscall: F1nn
         # e.g. sys $2
         # TEMPORARILY ONLY SUPPORTS SINGLE DIGIT SYSCALLS
-        return compress_bytes(15, 1, 0, read_num(operands[0]))
+        return compress_bytes(15, 1, 0, int(operands[0], 0))
     
     elif instruction == "j":
         # jump
@@ -860,8 +872,7 @@ def get_bytes_from_ins(command, memptr, labels, undefined_labels, MEMORY_SIZE):
                 # jump immediate: B--- aaaaaaaa
                 if "0x" in operands[0]:
                     # e.g. j 0x1000
-                    num = read_num(operands[0])
-                    print(num)
+                    num = int(operands[0], 0)
                 elif operands[0] in labels.keys():
                     # e.g. j func
                     # label is already defined
@@ -902,21 +913,22 @@ def get_bytes_from_ins(command, memptr, labels, undefined_labels, MEMORY_SIZE):
         # label setter
         labels[instruction[:len(instruction) - 1]] = memptr
         return []
-
+    elif instruction == ".long":
+        longs = []
+        for op in operands:
+            longs.extend(int(operands[0], 0).to_bytes(4, "big"))
+        return longs
 
     return []
-
 
 def get_hexits(val):
     """
     converts a byte into a pair of hexits
     """
 
-    # convert to hex, buffer to 2 digits, remove the 0x
-    hexit_pair = hex(val)[2:].zfill(2) 
-    # get integers back
-    return int(hexit_pair[0], 16), int(hexit_pair[1], 16)
-
+    # For upper hexit, divide by 16
+    # For lower hexit, and with the bitmask 0x0F, which is 0b00001111
+    return val // 16, val & 0x0F
 
 def compile_byte(val1, val2):
     """
@@ -933,11 +945,11 @@ def get_offset_reg(operand):
     """
 
     basedata = operand.split("(") # find first bracket
-    if basedata[0] == "": 
+    if not basedata[0]: 
         # we support a blank instead of a zero for no-offset storage
         offset = 0
     else:
-        offset = read_num(basedata[0])
+        offset = int(basedata[0], 0)
 
     # the second bracket should be at the end of the other half of the split
     register = reg(basedata[1][:-1])
@@ -952,17 +964,17 @@ def compress_bytes(opcode, op0, op1, op2, value = None):
     # convert integer values to compressed hex
     # this takes the hex values (guaranteed to be single character as each input is a single hexit), without the 0x, 
     # and puts them side by side
-    hex1 = hex(opcode)[2:] + hex(op0)[2:]
-    hex2 = hex(op1)[2:] + hex(op2)[2:]
 
     # start array
-    myslice = [int(hex1, 16), int(hex2, 16)]
+    myslice = [(opcode << 4) + op0, (op1 << 4) + op2]
     if value != None: # account for zero
         # add bytecode extension if large immediate value present
-        myslice += list(int(value).to_bytes(4, "big"))
-    
-    return myslice
+        if value < 0: # support signed values
+            myslice.extend(int(value).to_bytes(4, "big", signed=True))
+        else: # support unsigned values
+            myslice.extend(int(value).to_bytes(4, "big"))
 
+    return myslice
 
 def bytes_to_assembly(strn, pc, lastpc):
     """

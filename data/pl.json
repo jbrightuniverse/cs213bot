@@ -1,4 +1,132 @@
 {
+    "Final Exam": [
+        {
+            "id": 16479,
+            "color": "blue1",
+            "label": "FE",
+            "name": "Final Exam",
+            "modes": [
+                {
+                    "credit": 100,
+                    "end": "15:39 PST, Sun, Apr, 18",
+                    "end_unix": 1618785599.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 100,
+                    "end": "16:19 PST, Sun, Apr, 18",
+                    "end_unix": 1618787999.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 100,
+                    "end": "17:29 PST, Sun, Apr, 18",
+                    "end_unix": 1618792199.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 100,
+                    "end": "14:59 PST, Sun, Apr, 18",
+                    "end_unix": 1618783199.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 100,
+                    "end": "22:29 PST, Sun, Apr, 18",
+                    "end_unix": 1618810199.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 0,
+                    "end": null,
+                    "end_unix": 0,
+                    "offset": 7
+                }
+            ]
+        }
+    ],
+    "Midterms": [
+        {
+            "id": 16401,
+            "color": "red1",
+            "label": "MT",
+            "name": "Midterm",
+            "modes": [
+                {
+                    "credit": 100,
+                    "end": "22:29 PST, Tue, Mar, 09",
+                    "end_unix": 1615357799.0,
+                    "offset": 8
+                },
+                {
+                    "credit": 100,
+                    "end": "10:44 PST, Tue, Mar, 09",
+                    "end_unix": 1615315499.0,
+                    "offset": 8
+                },
+                {
+                    "credit": 100,
+                    "end": "21:44 PST, Tue, Mar, 09",
+                    "end_unix": 1615355099.0,
+                    "offset": 8
+                },
+                {
+                    "credit": 100,
+                    "end": "10:23 PST, Tue, Mar, 09",
+                    "end_unix": 1615314239.0,
+                    "offset": 8
+                },
+                {
+                    "credit": 100,
+                    "end": "10:44 PST, Tue, Mar, 09",
+                    "end_unix": 1615315499.0,
+                    "offset": 8
+                },
+                {
+                    "credit": 100,
+                    "end": "21:44 PST, Tue, Mar, 09",
+                    "end_unix": 1615355099.0,
+                    "offset": 8
+                },
+                {
+                    "credit": 100,
+                    "end": "10:23 PST, Tue, Mar, 09",
+                    "end_unix": 1615314239.0,
+                    "offset": 8
+                },
+                {
+                    "credit": 100,
+                    "end": "21:23 PST, Tue, Mar, 09",
+                    "end_unix": 1615353839.0,
+                    "offset": 8
+                },
+                {
+                    "credit": 100,
+                    "end": "10:09 PST, Tue, Mar, 09",
+                    "end_unix": 1615313399.0,
+                    "offset": 8
+                },
+                {
+                    "credit": 100,
+                    "end": "20:59 PST, Tue, Mar, 09",
+                    "end_unix": 1615352399.0,
+                    "offset": 8
+                },
+                {
+                    "credit": 100,
+                    "end": "18:00 PST, Wed, Mar, 24",
+                    "end_unix": 1616634001.0,
+                    "offset": 8
+                },
+                {
+                    "credit": 0,
+                    "end": null,
+                    "end_unix": 0,
+                    "offset": 7
+                }
+            ]
+        }
+    ],
     "Assignments": [
         {
             "id": 16232,
@@ -69,6 +197,12 @@
                     "end": "23:59 PST, Sun, Feb, 07",
                     "end_unix": 1612771199.0,
                     "offset": 8
+                },
+                {
+                    "credit": 0,
+                    "end": null,
+                    "end_unix": 0,
+                    "offset": 8
                 }
             ]
         },
@@ -89,6 +223,206 @@
                     "end": "23:59 PST, Sun, Feb, 14",
                     "end_unix": 1613375999.0,
                     "offset": 8
+                },
+                {
+                    "credit": 0,
+                    "end": null,
+                    "end_unix": 0,
+                    "offset": 7
+                }
+            ]
+        },
+        {
+            "id": 16358,
+            "color": "green1",
+            "label": "A5",
+            "name": "Memory Management",
+            "modes": [
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Sat, Feb, 27",
+                    "end_unix": 1614499199.0,
+                    "offset": 8
+                },
+                {
+                    "credit": 0,
+                    "end": "23:59 PST, Sun, Feb, 28",
+                    "end_unix": 1614585599.0,
+                    "offset": 8
+                },
+                {
+                    "credit": 0,
+                    "end": null,
+                    "end_unix": 0,
+                    "offset": 7
+                }
+            ]
+        },
+        {
+            "id": 16398,
+            "color": "green1",
+            "label": "A6",
+            "name": "Static Control Flow and the Stack",
+            "modes": [
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Sat, Mar, 13",
+                    "end_unix": 1615708799.0,
+                    "offset": 8
+                },
+                {
+                    "credit": 0,
+                    "end": "23:59 PST, Sun, Mar, 14",
+                    "end_unix": 1615791599.0,
+                    "offset": 8
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Thu, Mar, 18",
+                    "end_unix": 1616137199.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 0,
+                    "end": null,
+                    "end_unix": 0,
+                    "offset": 7
+                }
+            ]
+        },
+        {
+            "id": 16417,
+            "color": "green1",
+            "label": "A7",
+            "name": "Stacks and Polymorphism",
+            "modes": [
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Sat, Mar, 20",
+                    "end_unix": 1616309999.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 0,
+                    "end": "23:59 PST, Sun, Mar, 21",
+                    "end_unix": 1616396399.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 0,
+                    "end": null,
+                    "end_unix": 0,
+                    "offset": 7
+                }
+            ]
+        },
+        {
+            "id": 16426,
+            "color": "green1",
+            "label": "A8",
+            "name": "Dynamic Control Flow",
+            "modes": [
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Sat, Mar, 27",
+                    "end_unix": 1616914799.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 0,
+                    "end": "23:59 PST, Sun, Mar, 28",
+                    "end_unix": 1617001199.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Tue, Mar, 30",
+                    "end_unix": 1617173999.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Wed, Mar, 31",
+                    "end_unix": 1617260399.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Fri, Apr, 02",
+                    "end_unix": 1617433199.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 0,
+                    "end": null,
+                    "end_unix": 0,
+                    "offset": 7
+                }
+            ]
+        },
+        {
+            "id": 16443,
+            "color": "green1",
+            "label": "A9",
+            "name": "I/O, Asynchrony and Threads",
+            "modes": [
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Sat, Apr, 03",
+                    "end_unix": 1617519599.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 0,
+                    "end": "23:59 PST, Sun, Apr, 04",
+                    "end_unix": 1617605999.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Wed, Apr, 07",
+                    "end_unix": 1617865199.0,
+                    "offset": 7
+                }
+            ]
+        },
+        {
+            "id": 16455,
+            "color": "green1",
+            "label": "A10",
+            "name": "Synchronization (Part 1)",
+            "modes": [
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Wed, Apr, 14",
+                    "end_unix": 1618469999.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 0,
+                    "end": "23:59 PST, Thu, Apr, 15",
+                    "end_unix": 1618556399.0,
+                    "offset": 7
+                }
+            ]
+        },
+        {
+            "id": 16456,
+            "color": "green1",
+            "label": "A11",
+            "name": "Synchronization (Part 2)",
+            "modes": [
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Fri, Apr, 16",
+                    "end_unix": 1618642799.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 0,
+                    "end": "23:59 PST, Sat, Apr, 17",
+                    "end_unix": 1618729199.0,
+                    "offset": 7
                 }
             ]
         }
@@ -369,6 +703,620 @@
                     "end": null,
                     "end_unix": 0,
                     "offset": 8
+                }
+            ]
+        },
+        {
+            "id": 16355,
+            "color": "pink1",
+            "label": "Q4-1",
+            "name": "Offsets and Assembly",
+            "modes": [
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Mon, Feb, 22",
+                    "end_unix": 1614067199.0,
+                    "offset": 8
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Mon, Feb, 22",
+                    "end_unix": 1614067199.0,
+                    "offset": 8
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Mon, Feb, 22",
+                    "end_unix": 1614067199.0,
+                    "offset": 8
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Mon, Feb, 22",
+                    "end_unix": 1614067199.0,
+                    "offset": 8
+                },
+                {
+                    "credit": 0,
+                    "end": "23:59 PST, Fri, Feb, 26",
+                    "end_unix": 1614412799.0,
+                    "offset": 8
+                },
+                {
+                    "credit": 0,
+                    "end": null,
+                    "end_unix": 0,
+                    "offset": 8
+                }
+            ]
+        },
+        {
+            "id": 16373,
+            "color": "pink1",
+            "label": "Q4-2",
+            "name": "Offsets and Assembly (Second Attempt)",
+            "modes": [
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Fri, Feb, 26",
+                    "end_unix": 1614412799.0,
+                    "offset": 8
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Fri, Feb, 26",
+                    "end_unix": 1614412799.0,
+                    "offset": 8
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Fri, Feb, 26",
+                    "end_unix": 1614412799.0,
+                    "offset": 8
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Fri, Feb, 26",
+                    "end_unix": 1614412799.0,
+                    "offset": 8
+                },
+                {
+                    "credit": 0,
+                    "end": null,
+                    "end_unix": 0,
+                    "offset": 8
+                }
+            ]
+        },
+        {
+            "id": 16383,
+            "color": "pink1",
+            "label": "Q5-1",
+            "name": "Reference Counting and Memory Management",
+            "modes": [
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Mon, Mar, 01",
+                    "end_unix": 1614671999.0,
+                    "offset": 8
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Mon, Mar, 01",
+                    "end_unix": 1614671999.0,
+                    "offset": 8
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Mon, Mar, 01",
+                    "end_unix": 1614671999.0,
+                    "offset": 8
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Mon, Mar, 01",
+                    "end_unix": 1614671999.0,
+                    "offset": 8
+                },
+                {
+                    "credit": 0,
+                    "end": "23:59 PST, Thu, Mar, 04",
+                    "end_unix": 1614931199.0,
+                    "offset": 8
+                },
+                {
+                    "credit": 0,
+                    "end": null,
+                    "end_unix": 0,
+                    "offset": 8
+                }
+            ]
+        },
+        {
+            "id": 16386,
+            "color": "pink1",
+            "label": "Q5-2",
+            "name": "Reference Counting and Memory Management (Second Attempt)",
+            "modes": [
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Thu, Mar, 04",
+                    "end_unix": 1614931199.0,
+                    "offset": 8
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Thu, Mar, 04",
+                    "end_unix": 1614931199.0,
+                    "offset": 8
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Thu, Mar, 04",
+                    "end_unix": 1614931199.0,
+                    "offset": 8
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Thu, Mar, 04",
+                    "end_unix": 1614931199.0,
+                    "offset": 8
+                },
+                {
+                    "credit": 0,
+                    "end": null,
+                    "end_unix": 0,
+                    "offset": 8
+                }
+            ]
+        },
+        {
+            "id": 16415,
+            "color": "pink1",
+            "label": "Q6-1",
+            "name": "Interpreting Assembly and Function Calls",
+            "modes": [
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Tue, Mar, 16",
+                    "end_unix": 1615964399.0,
+                    "offset": 8
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Tue, Mar, 16",
+                    "end_unix": 1615964399.0,
+                    "offset": 8
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Tue, Mar, 16",
+                    "end_unix": 1615964399.0,
+                    "offset": 8
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Tue, Mar, 16",
+                    "end_unix": 1615964399.0,
+                    "offset": 8
+                },
+                {
+                    "credit": 0,
+                    "end": "23:59 PST, Fri, Mar, 19",
+                    "end_unix": 1616223599.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 0,
+                    "end": null,
+                    "end_unix": 0,
+                    "offset": 7
+                }
+            ]
+        },
+        {
+            "id": 16418,
+            "color": "pink1",
+            "label": "Q6-2",
+            "name": "Interpreting Assembly and Function Calls (Second Attempt)",
+            "modes": [
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Fri, Mar, 19",
+                    "end_unix": 1616223599.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Fri, Mar, 19",
+                    "end_unix": 1616223599.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Fri, Mar, 19",
+                    "end_unix": 1616223599.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Fri, Mar, 19",
+                    "end_unix": 1616223599.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 0,
+                    "end": null,
+                    "end_unix": 0,
+                    "offset": 7
+                }
+            ]
+        },
+        {
+            "id": 16423,
+            "color": "pink1",
+            "label": "Q7-1",
+            "name": "Stacks and Polymorphism",
+            "modes": [
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Mon, Mar, 22",
+                    "end_unix": 1616482799.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Mon, Mar, 22",
+                    "end_unix": 1616482799.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Mon, Mar, 22",
+                    "end_unix": 1616482799.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Mon, Mar, 22",
+                    "end_unix": 1616482799.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Wed, Apr, 07",
+                    "end_unix": 1617865199.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 0,
+                    "end": "23:59 PST, Sat, Mar, 27",
+                    "end_unix": 1616914799.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 0,
+                    "end": null,
+                    "end_unix": 0,
+                    "offset": 7
+                }
+            ]
+        },
+        {
+            "id": 16432,
+            "color": "pink1",
+            "label": "Q7-2",
+            "name": "Stacks and Polymorphism",
+            "modes": [
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Sat, Mar, 27",
+                    "end_unix": 1616914799.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Sat, Mar, 27",
+                    "end_unix": 1616914799.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Sat, Mar, 27",
+                    "end_unix": 1616914799.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Sat, Mar, 27",
+                    "end_unix": 1616914799.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Wed, Apr, 07",
+                    "end_unix": 1617865199.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 0,
+                    "end": null,
+                    "end_unix": 0,
+                    "offset": 7
+                }
+            ]
+        },
+        {
+            "id": 16440,
+            "color": "pink1",
+            "label": "Q8-1",
+            "name": "Control Flow, Function Pointers and Polymorphism",
+            "modes": [
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Mon, Mar, 29",
+                    "end_unix": 1617087599.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Mon, Mar, 29",
+                    "end_unix": 1617087599.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Mon, Mar, 29",
+                    "end_unix": 1617087599.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Mon, Mar, 29",
+                    "end_unix": 1617087599.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 0,
+                    "end": "23:59 PST, Thu, Apr, 01",
+                    "end_unix": 1617346799.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 0,
+                    "end": null,
+                    "end_unix": 0,
+                    "offset": 7
+                }
+            ]
+        },
+        {
+            "id": 16441,
+            "color": "pink1",
+            "label": "Q8-2",
+            "name": "Control Flow, Function Pointers and Polymorphism (Second Attempt)",
+            "modes": [
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Thu, Apr, 01",
+                    "end_unix": 1617346799.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Thu, Apr, 01",
+                    "end_unix": 1617346799.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Thu, Apr, 01",
+                    "end_unix": 1617346799.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Thu, Apr, 01",
+                    "end_unix": 1617346799.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Fri, Apr, 09",
+                    "end_unix": 1618037999.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 0,
+                    "end": null,
+                    "end_unix": 0,
+                    "offset": 7
+                }
+            ]
+        },
+        {
+            "id": 16451,
+            "color": "pink1",
+            "label": "Q9-1",
+            "name": "I/O, Asynchrony and Threads",
+            "modes": [
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Tue, Apr, 06",
+                    "end_unix": 1617778799.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Tue, Apr, 06",
+                    "end_unix": 1617778799.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Tue, Apr, 06",
+                    "end_unix": 1617778799.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Tue, Apr, 06",
+                    "end_unix": 1617778799.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 0,
+                    "end": "23:59 PST, Fri, Apr, 09",
+                    "end_unix": 1618037999.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 0,
+                    "end": null,
+                    "end_unix": 0,
+                    "offset": 7
+                }
+            ]
+        },
+        {
+            "id": 16452,
+            "color": "pink1",
+            "label": "Q9-2",
+            "name": "I/O, Asynchrony and Threads (Second Attempt)",
+            "modes": [
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Fri, Apr, 09",
+                    "end_unix": 1618037999.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Fri, Apr, 09",
+                    "end_unix": 1618037999.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Fri, Apr, 09",
+                    "end_unix": 1618037999.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Fri, Apr, 09",
+                    "end_unix": 1618037999.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 0,
+                    "end": null,
+                    "end_unix": 0,
+                    "offset": 7
+                }
+            ]
+        },
+        {
+            "id": 16469,
+            "color": "pink1",
+            "label": "Q10-1",
+            "name": "Synchronization",
+            "modes": [
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Tue, Apr, 13",
+                    "end_unix": 1618383599.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Tue, Apr, 13",
+                    "end_unix": 1618383599.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Tue, Apr, 13",
+                    "end_unix": 1618383599.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Tue, Apr, 13",
+                    "end_unix": 1618383599.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 0,
+                    "end": "23:59 PST, Fri, Apr, 16",
+                    "end_unix": 1618642799.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 0,
+                    "end": null,
+                    "end_unix": 0,
+                    "offset": 7
+                }
+            ]
+        },
+        {
+            "id": 16470,
+            "color": "pink1",
+            "label": "Q10-2",
+            "name": "Synchronization (Second Attempt)",
+            "modes": [
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Fri, Apr, 16",
+                    "end_unix": 1618642799.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Fri, Apr, 16",
+                    "end_unix": 1618642799.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Fri, Apr, 16",
+                    "end_unix": 1618642799.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Fri, Apr, 16",
+                    "end_unix": 1618642799.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 0,
+                    "end": null,
+                    "end_unix": 0,
+                    "offset": 7
+                }
+            ]
+        }
+    ],
+    "Question Preparation": [
+        {
+            "id": 16450,
+            "color": "gray1",
+            "label": "P1",
+            "name": "April Fools",
+            "modes": [
+                {
+                    "credit": 100,
+                    "end": "23:59 PST, Thu, Apr, 01",
+                    "end_unix": 1617346799.0,
+                    "offset": 7
+                },
+                {
+                    "credit": 0,
+                    "end": null,
+                    "end_unix": 0,
+                    "offset": 7
                 }
             ]
         }

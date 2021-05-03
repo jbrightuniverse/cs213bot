@@ -43,7 +43,7 @@ class Tools(commands.Cog):
         """
         # https://github.com/Person314159/cs221bot/blob/master/cogs/server_checker.py
         msgs = []
-        for server_name in ["thetis", "remote", "annacis", "anvil", "bowen", "lulu"]:
+        for server_name in ["thetis", "remote", "annacis", "anvil", "bowen", "lulu", "gambier"]:
             ip = f"{server_name}.students.cs.ubc.ca"
             connect = can_connect(ip)
             msgs.append(f"{['⚠️', '✅'][connect]} {server_name} is {['offline', 'online'][connect]}")

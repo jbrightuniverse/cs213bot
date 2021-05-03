@@ -372,7 +372,7 @@ class Commands(commands.Cog):
         `!join L2A` adds the L2A role to yourself
 
         **Valid Roles:**
-        notify, L2A, L2B, L2C, L2D, L2E, L2F, L2G, L2H, L2J, L2K, L2L, L2M, L2N, L2P, L2Q, L2R, L2S, He/Him/His, She/Her/Hers, They/Them/Theirs, Ze/Zir/Zirs
+        notify, Looking for Partners, L2A, L2B, L2C, L2D, L2E, L2F, L2G, L2H, L2J, L2K, L2L, L2M, L2N, L2P, L2Q, L2R, L2S, He/Him/His, She/Her/Hers, They/Them/Theirs, Ze/Zir/Zirs
         """
 
         # case where role name is space separated
@@ -383,7 +383,7 @@ class Commands(commands.Cog):
             raise BadArgs("", show_help=True)
 
         # make sure that you can't add roles like "prof" or "ta"
-        valid_roles = ["notify", "L2A", "L2B", "L2C", "L2D", "L2E", "L2F", "L2G", "L2H", "L2J", "L2K", "L2L", "L2M", "L2N", "L2P", "L2Q", "L2R", "L2S", "He/Him/His", "She/Her/Hers", "They/Them/Theirs", "Ze/Zir/Zirs"]
+        valid_roles = ["notify", "Looking for Partners", "L2A", "L2B", "L2C", "L2D", "L2E", "L2F", "L2G", "L2H", "L2J", "L2K", "L2L", "L2M", "L2N", "L2P", "L2Q", "L2R", "L2S", "He/Him/His", "She/Her/Hers", "They/Them/Theirs", "Ze/Zir/Zirs"]
         aliases = {"he": "He/Him/His", "she": "She/Her/Hers", "ze": "Ze/Zir/Zirs", "they": "They/Them/Theirs"}
 
         # Convert alias to proper name
@@ -605,20 +605,59 @@ class Commands(commands.Cog):
         self.bot.writeJSON(self.bot.poll_dict, "data/poll.json")
 
     @commands.command(hidden=True)
-    @commands.is_owner()
+    @commands.has_permissions(administrator=True)
     @commands.cooldown(1, 5, commands.BucketType.user)
-    async def shut(self, ctx):
+    async def shut(self, ctx, on):
+        await ctx.message.delete()
         change = ""
 
-        for role in self.bot.get_guild(796222302483251241).roles[:-6]:
-            if role.permissions.value == 104187456:
+        for role in ctx.guild.roles:
+            if role.permissions.administrator:
+                continue
+
+            new_perms = role.permissions
+
+            if on == "off":
                 change = "enabled messaging permissions"
-                await role.edit(permissions=discord.Permissions(permissions=104189504))
-            elif role.permissions.value == 104189504:
+                new_perms.update(send_messages=True)
+            else:
                 change = "disabled messaging permissions"
-                await role.edit(permissions=discord.Permissions(permissions=104187456))
+                new_perms.update(send_messages=False)
+            try:
+              await role.edit(permissions=new_perms)
+            except:
+              await ctx.send("Cannot edit " + role.name)
 
         await ctx.send(change)
+
+
+    @commands.command(hidden=True)
+    @commands.has_permissions(administrator=True)
+    @commands.cooldown(1, 5, commands.BucketType.user)
+    async def supershut(self, ctx, on):
+        await ctx.message.delete()
+        change = ""
+
+        for role in ctx.guild.roles:
+            if role.permissions.administrator:
+                continue
+
+            new_perms = role.permissions
+
+            if on == "off":
+                change = "enabled viewing permissions"
+                new_perms.update(read_messages=True)
+            else:
+                change = "disabled viewing permissions"
+                new_perms.update(read_messages=False)
+
+            try:
+              await role.edit(permissions=new_perms)
+            except:
+              await ctx.send("Cannot edit " + role.name)
+
+        await ctx.send(change)
+
 
     @commands.command()
     @commands.cooldown(1, 5, commands.BucketType.user)
