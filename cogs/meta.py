@@ -317,7 +317,6 @@ class Meta(commands.Cog):
         await ctx.send("Top Emoji Used:\n\n" + "\n".join(eresult[:10]))
 
 
-
     @commands.command()
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def help(self, ctx, *arg):

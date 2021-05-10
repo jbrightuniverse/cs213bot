@@ -1,35 +1,17 @@
 # TODO List/Roadmap for cs213bot
 
-## sm213: Discord Simple Machine
-
-**Short/Medium-Term:**
-- [X] support the use of labels for addresses in memory; allow these labels to be used with branching
-     * - [ ] allow labels to be read back in `ins`
-     * - [ ] make it so labels can be placed manually
-     * - [ ] prevent labels from triggering invalid instruction when written
-- [ ] support assignments of static variables in memory with `.long`
-- [ ] support integrated usage of `.pos`
-
-**Long-Term:**
-
-## sm213: other
-
-**Long-Term:**
-
-## tools
-
-**Short-Term:**
-- [ ] greater variation of questions in `!quiz`
-    
-## overall
-
-**Long-Term:**
-- [ ] use the simulator framework to implement Y86 for CPSC 313 and deploy the bot in the official 313 course Discord server
+- [ ] create instruction manual for operations of Discord and CS213bot so future terms can run the system independently
 
 # PAST TODO LIST:
 
 ## sm213: Discord Simple Machine
 
+- [X] support the use of labels for addresses in memory; allow these labels to be used with branching
+     * - [X] allow labels to be read back in `ins`
+     * - [X] make it so labels can be placed manually
+     * - [X] prevent labels from triggering invalid instruction when written
+- [X] support assignments of static variables in memory with `.long`
+- [X] support integrated usage of `.pos`
 - [X] separate `view` using command flags to separately view memory and registers in smaller messages; make one of these smaller results the default
 - [X] fix the index out of range error when stepping too far
 - [X] every instruction accepting an immediate must be able to accept hex or decimal, and optionally allow a $ at the front or not

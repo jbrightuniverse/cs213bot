@@ -63,29 +63,18 @@ async def status_task():
 
 
 def startup():
-    files = ["data/poll.json", "data/pl.json"]
+    f = "data/pl.json"
+    if not isfile(f):
+        create_file_if_not_exists(f)
+        bot.writeJSON({}, f)
 
-    for f in files:
-        if not isfile(f):
-            create_file_if_not_exists(f)
-            bot.writeJSON({}, f)
+    f = "data/tomorrow.json":
+    if not isfile(f):
+        create_file_if_not_exists(f)
+        bot.writeJSON([], f)
 
-    for f in ["data/tomorrow.json"]:
-        if not isfile(f):
-            create_file_if_not_exists(f)
-            bot.writeJSON([], f)
-
-    bot.poll_dict = bot.loadJSON("data/poll.json")
     bot.pl_dict = defaultdict(list, bot.loadJSON("data/pl.json"))
     bot.due_tomorrow = bot.loadJSON("data/tomorrow.json")
-
-    for channel in filter(lambda ch: not bot.get_channel(int(ch)), list(bot.poll_dict)):
-        del bot.poll_dict[channel]
-
-    for channel in (c for g in bot.guilds for c in g.text_channels if str(c.id) not in bot.poll_dict):
-        bot.poll_dict.update({str(channel.id): ""})
-
-    bot.writeJSON(dict(bot.poll_dict), "data/poll.json")
 
 async def wipe_dms():
     guild = bot.get_guild(796222302483251241)
@@ -257,33 +246,6 @@ async def on_ready():
     bot.loop.create_task(wipe_dms())
     bot.loop.create_task(crawl_prairielearn())
 
-@bot.event
-async def on_guild_join(guild):
-    for channel in guild.text_channels:
-        bot.poll_dict.update({str(channel.id): ""})
-        bot.writeJSON(bot.poll_dict, "data/poll.json")
-
-
-@bot.event
-async def on_guild_remove(guild):
-    for channel in filter(lambda c: str(c.id) in bot.poll_dict, guild.channels):
-        del bot.poll_dict[str(channel.id)]
-        bot.writeJSON(bot.poll_dict, "data/poll.json")
-
-
-@bot.event
-async def on_guild_channel_create(channel):
-    if isinstance(channel, discord.TextChannel):
-        bot.poll_dict.update({str(channel.id): ""})
-        bot.writeJSON(bot.poll_dict, "data/poll.json")
-
-
-@bot.event
-async def on_guild_channel_delete(channel):
-    if str(channel.id) in bot.poll_dict:
-        del bot.poll_dict[str(channel.id)]
-        bot.writeJSON(bot.poll_dict, "data/poll.json")
-
 
 @bot.event
 async def on_message_edit(before, after):
@@ -301,7 +263,7 @@ async def on_message(message):
         # 	print(f"{message.guild.name}: {message.channel.name}: {message.author.name}: \"{message.content}\" @ {str(datetime.datetime.now())} \r\n", file = f)
         # print(message.content)
 
-        # this is some weird bs happening only with android users in certain servers and idk why it happens
+        # this is some weird thing happening only with android users in certain servers and idk why it happens
         # but basically the '@' is screwed up
         if message.channel.id == 797643936603963402 and len(message.attachments):
             await message.add_reaction("⬆️")
@@ -328,7 +290,7 @@ if __name__ == "__main__":
 
 @bot.event
 async def on_command_error(ctx, error):
-    if isinstance(error, commands.CommandNotFound) or isinstance(error, discord.HTTPException) or isinstance(error, discord.NotFound):
+    if isinstance(error, commands.CommandNotFound) or isinstance(error, discord.HTTPException) or isinstance(error, discord.NotFound) or isinstance(error, commands.errors.NotOwner):
         pass
     elif isinstance(error, BadArgs) or str(type(error)) == "<class 'cogs.meta.BadArgs'>":
         await error.print(ctx)
