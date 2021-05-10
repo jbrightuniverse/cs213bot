@@ -1,4 +1,3 @@
-import argparse
 import asyncio
 import json
 import os
@@ -7,6 +6,7 @@ import re
 import requests
 import time
 import traceback
+import sys
 
 from collections import defaultdict
 from datetime import datetime
@@ -23,9 +23,6 @@ load_dotenv()
 CS213BOT_KEY = os.getenv("CS213BOT_KEY")
 
 bot = commands.Bot(command_prefix="!", help_command=None, intents=discord.Intents.all())
-
-parser = argparse.ArgumentParser(description="Run CS213Bot")
-args = parser.parse_args()
 
 
 def loadJSON(jsonfile):
@@ -68,7 +65,7 @@ def startup():
         create_file_if_not_exists(f)
         bot.writeJSON({}, f)
 
-    f = "data/tomorrow.json":
+    f = "data/tomorrow.json"
     if not isfile(f):
         create_file_if_not_exists(f)
         bot.writeJSON([], f)
@@ -77,7 +74,7 @@ def startup():
     bot.due_tomorrow = bot.loadJSON("data/tomorrow.json")
 
 async def wipe_dms():
-    guild = bot.get_guild(796222302483251241)
+    guild = bot.get_guild(838103749372674089)
 
     while True:
         await asyncio.sleep(300)
@@ -96,7 +93,7 @@ async def wipe_dms():
 
 
 async def crawl_prairielearn():
-    channel = bot.get_channel(803495663862022155)
+    channel = bot.get_channel(838103749690916899)
     colormap = {
         "red1": (255, 204, 188),
         "red2": (255, 108, 91),
@@ -203,7 +200,7 @@ async def crawl_prairielearn():
                             break
 
             if sent:
-                await channel.send("<@&796222302483251244>")
+                await channel.send("<@&838103749372674091>")
 
             bot.pl_dict = new_pl_dict
             bot.writeJSON(dict(bot.pl_dict), "data/pl.json")
@@ -241,10 +238,15 @@ def get_pl_data(url):
 @bot.event
 async def on_ready():
     startup()
-    print("Logged in successfully")
     bot.loop.create_task(status_task())
     bot.loop.create_task(wipe_dms())
-    bot.loop.create_task(crawl_prairielearn())
+    #bot.loop.create_task(crawl_prairielearn())
+    if len(sys.argv) >= 2:
+        chx = bot.get_channel(int(sys.argv[1]))
+        sys.stderr = sys.stdout
+        await chx.send(f"Ready: {bot.user}")
+    else:
+        print(f"Ready: {bot.user}")
 
 
 @bot.event
@@ -265,7 +267,7 @@ async def on_message(message):
 
         # this is some weird thing happening only with android users in certain servers and idk why it happens
         # but basically the '@' is screwed up
-        if message.channel.id == 797643936603963402 and len(message.attachments):
+        if message.channel.id == 838103749690916902 and len(message.attachments):
             await message.add_reaction("⬆️")
         if re.findall(r"<<@&457618814058758146>&?\d{18}>", message.content):
             new = message.content.replace("<@&457618814058758146>", "@")

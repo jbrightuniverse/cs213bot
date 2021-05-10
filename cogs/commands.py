@@ -51,7 +51,7 @@ class Commands(commands.Cog):
         """
 
         # meant for 213 server
-        guild = self.bot.get_guild(796222302483251241)
+        guild = self.bot.get_guild(838103749372674089)
 
         if "close" in ctx.message.content.lower():
             if not ctx.channel.name.startswith("213dm-"):
@@ -87,11 +87,11 @@ class Commands(commands.Cog):
         overwrites = {
             # allow Computers and the new role, deny everyone else
             guild.default_role                : noaccess,
-            guild.get_role(796222302697816121): access,
+            guild.get_role(838103749486051415): access,
             role                              : access
         }
         # this id is id of group dm category
-        channel = await guild.create_text_channel(nam, overwrites=overwrites, category=guild.get_channel(796505656437768233))
+        channel = await guild.create_text_channel(nam, overwrites=overwrites, category=guild.get_channel(838103751175700544))
         await ctx.send("Opened channel.")
         users = (f"<@{usr.id}>" for usr in ctx.message.mentions)
         await channel.send(f"<@{ctx.author.id}> {' '.join(users)}\n" +

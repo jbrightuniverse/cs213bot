@@ -16,6 +16,9 @@ import matplotlib.pyplot as plt
 
 from io import BytesIO
 
+import subprocess
+import tempfile
+import time
 
 class Meta(commands.Cog):
     def __init__(self, bot):
@@ -25,6 +28,31 @@ class Meta(commands.Cog):
     @commands.is_owner()
     async def die(self, ctx):
         await self.bot.logout()
+
+    @commands.command(hidden = True)
+    @commands.is_owner()
+    async def restart(self, ctx):
+        await ctx.send("Restarting.")
+        with tempfile.TemporaryFile() as tempf:
+            proc = subprocess.Popen(["python3", "cs213bot.py", str(ctx.channel.id)], stderr=tempf)
+            tempf.seek(0)
+            a = tempf.read()
+            b = time.time()
+            while not a: 
+                await asyncio.sleep(0)
+                tempf.seek(0)
+                a = tempf.read()
+                if time.time() - b > 3:
+                    break
+            if a:
+                return await ctx.send("Error:```\n"+a.decode('utf-8') + "\n```Restart failed.")
+        os.system(f"kill {os.getpid()}")
+
+    @commands.command(hidden = True)
+    @commands.is_owner()
+    async def pid(self, ctx):
+        await ctx.send(os.getpid())
+
 
     @commands.command()
     @commands.is_owner()
