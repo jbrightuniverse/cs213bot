@@ -17,23 +17,27 @@ from discord.ext import commands
 from dotenv import load_dotenv
 
 from util.badargs import BadArgs
-from util.create_file import create_file_if_not_exists
+from prairiepy import PrairieLearn, colormap
 
 load_dotenv()
 CS213BOT_KEY = os.getenv("CS213BOT_KEY")
 
 bot = commands.Bot(command_prefix="!", help_command=None, intents=discord.Intents.all())
+bot.pl_dict = defaultdict(list)
+bot.due_tomorrow = []
+bot.pl = PrairieLearn(os.getenv("PLTOKEN"), api_server_url = "https://ca.prairielearn.org/pl/api/v1")
 
+for extension in filter(lambda f: isfile(join("cogs", f)) and f != "__init__.py", os.listdir("cogs")):
+    bot.load_extension(f"cogs.{extension[:-3]}")
+    print(f"{extension} module loaded")
 
-def loadJSON(jsonfile):
-    with open(jsonfile, "r") as f:
+def writeJSON(data, path):
+    with open(path, "w") as f:
+        json.dump(data, f, indent = 4)
+
+def readJSON(path):
+    with open(path) as f:
         return json.load(f)
-
-
-def writeJSON(data, jsonfile):
-    with open(jsonfile, "w") as f:
-        json.dump(data, f, indent=4)
-
 
 async def status_task():
     await bot.wait_until_ready()
@@ -59,28 +63,12 @@ async def status_task():
         await asyncio.sleep(30)
 
 
-def startup():
-    f = "data/pl.json"
-    if not isfile(f):
-        create_file_if_not_exists(f)
-        bot.writeJSON({}, f)
-
-    f = "data/tomorrow.json"
-    if not isfile(f):
-        create_file_if_not_exists(f)
-        bot.writeJSON([], f)
-
-    bot.pl_dict = defaultdict(list, bot.loadJSON("data/pl.json"))
-    bot.due_tomorrow = bot.loadJSON("data/tomorrow.json")
-
 async def wipe_dms():
-    guild = bot.get_guild(838103749372674089)
-
+    guild = bot.get_guild(int(os.getenv("SERVER_ID")))
     while True:
         await asyncio.sleep(300)
         bot.get_cog("SM213").queue = list(filter(lambda x: time.time() - x[1] < 300, bot.get_cog("SM213").queue))
         now = datetime.utcnow()
-
         for channel in filter(lambda c: c.name.startswith("213dm-"), guild.channels):
             async for msg in channel.history(limit=1):
                 if (now - msg.created_at).total_seconds() >= 86400:
@@ -94,46 +82,13 @@ async def wipe_dms():
 
 async def crawl_prairielearn():
     channel = bot.get_channel(838103749690916899)
-    colormap = {
-        "red1": (255, 204, 188),
-        "red2": (255, 108, 91),
-        "red3": (199, 44, 29),
-        "pink1": (255, 188, 216),
-        "pink2": (250, 92, 152),
-        "pink3": (186, 28, 88),
-        "purple1": (220, 198, 224),
-        "purple2": (155, 89, 182),
-        "purple3": (94, 20, 125),
-        "blue1": (57, 212, 225),
-        "blue2": (18, 151, 224),
-        "blue3": (0, 87, 160),
-        "turquoise1": (94, 250, 247),
-        "turquoise2": (38, 203, 192),
-        "turquoise3": (0, 140, 128),
-        "green1": (142, 225, 193),
-        "green2": (46, 204, 113),
-        "green3": (0, 140, 49),
-        "yellow1": (253, 227, 167),
-        "yellow2": (245, 171, 53),
-        "yellow3": (216, 116, 0),
-        "orange1": (255, 220, 181),
-        "orange2": (255, 146, 106),
-        "orange3": (195, 82, 43),
-        "brown1": (246, 196, 163),
-        "brown2": (206, 156, 123),
-        "brown3": (142, 92, 59),
-        "gray1": (224, 224, 224),
-        "gray2": (144, 144, 144),
-        "gray3": (80, 80, 80)
-    }
     while True:
-        try:
-            instance_id = 2295
+        try: 
             new_pl_dict = defaultdict(list)
-            total_assignments = get_pl_data(f"https://ca.prairielearn.org/pl/api/v1/course_instances/{instance_id}/assessments")
+            total_assignments = get_pl_data("get_assessments", {"course_instance_id": int(os.getenv("COURSE_ID"))})
             for assignment in total_assignments:
                 assessment_id = assignment["assessment_id"]
-                schedule_data = get_pl_data(f"https://ca.prairielearn.org/pl/api/v1/course_instances/{instance_id}/assessments/{assessment_id}/assessment_access_rules")
+                schedule_data = get_pl_data("get_assessment_access_rules", {"course_instance_id": int(os.getenv("COURSE_ID")), "assessment_id": assessment_id})
                 modes = []
                 not_started = False
                 for mode in schedule_data:
@@ -181,7 +136,7 @@ async def crawl_prairielearn():
                 for entry in new_pl_dict[header]:
                     if entry not in bot.pl_dict[header]:
                         sent = True
-                        embed = discord.Embed(color = int("%x%x%x" % colormap[entry["color"]], 16), title = "CPSC 213 on PrairieLearn: New Assessment", description = f"[**{['Assignment', 'Quiz'][entry['label'].startswith('Q')]} Unlocked: {entry['label']} {entry['name']}**](https://ca.prairielearn.org/pl/course_instance/2295/assessment/{entry['id']}/)")
+                        embed = discord.Embed(color = int("%x%x%x" % colormap[entry["color"]], 16), title = "CPSC 213 on PrairieLearn: New Assessment", description = f"[**{['Assignment', 'Quiz'][entry['label'].startswith('Q')]} Unlocked: {entry['label']} {entry['name']}**](https://ca.prairielearn.org/pl/course_instance/2316/assessment/{entry['id']}/)")
                         for mode in entry["modes"]:
                             if mode["credit"] == 100 and mode["end"]:
                                 embed.set_footer(text = f"Due at {mode['end']}.")
@@ -192,7 +147,7 @@ async def crawl_prairielearn():
                     for mode in entry["modes"]:
                         if mode["credit"] == 100 and mode["end"] and (mode["end_unix"] + 60*mode["offset"]) - time.time() < 86400 and entry["label"] + " " + entry["name"] not in bot.due_tomorrow:
                             bot.due_tomorrow.append(entry["label"]+" "+entry["name"])
-                            embed = discord.Embed(color = int("%x%x%x" % colormap[entry["color"]], 16), title = "CPSC 213 on PrairieLearn: Due Date Reminder", description = f"[**{['Assignment', 'Quiz'][entry['label'].startswith('Q')]} Due in <24 Hours: {entry['label']} {entry['name']}**](https://ca.prairielearn.org/pl/course_instance/2295/assessment/{entry['id']}/)")
+                            embed = discord.Embed(color = int("%x%x%x" % colormap[entry["color"]], 16), title = "CPSC 213 on PrairieLearn: Due Date Reminder", description = f"[**{['Assignment', 'Quiz'][entry['label'].startswith('Q')]} Due in <24 Hours: {entry['label']} {entry['name']}**](https://ca.prairielearn.org/pl/course_instance/2316/assessment/{entry['id']}/)")
                             embed.set_footer(text = f"Due at {mode['end']}.")
                             embed.set_thumbnail(url = "https://cdn.discordapp.com/attachments/511797229913243649/803491233925169152/unknown.png")
                             await channel.send(embed = embed)
@@ -203,22 +158,22 @@ async def crawl_prairielearn():
                 await channel.send("<@&838103749372674091>")
 
             bot.pl_dict = new_pl_dict
-            bot.writeJSON(dict(bot.pl_dict), "data/pl.json")
-            bot.writeJSON(bot.due_tomorrow, "data/tomorrow.json")
+            writeJSON(dict(bot.pl_dict), "data/pl.json")
+            writeJSON(bot.due_tomorrow, "data/tomorrow.json")
             await asyncio.sleep(1800)
         except Exception as e:
             await channel.send(str(e))
             await asyncio.sleep(60)
 
 
-def get_pl_data(url):
+def get_pl_data(method, options):
     # based on https://github.com/PrairieLearn/PrairieLearn/blob/master/tools/api_download.py
-    headers = {'Private-Token': os.getenv("PLTOKEN")}
+    
     start_time = time.time()
     retry_502_max = 30
     retry_502_i = 0
     while True:
-        r = requests.get(url, headers=headers)
+        r = getattr(bot.pl, method)(options)
         if r.status_code == 200:
             break
         elif r.status_code == 502:
@@ -237,16 +192,23 @@ def get_pl_data(url):
 
 @bot.event
 async def on_ready():
-    startup()
-    bot.loop.create_task(status_task())
-    bot.loop.create_task(wipe_dms())
-    #bot.loop.create_task(crawl_prairielearn())
     if len(sys.argv) >= 2:
         chx = bot.get_channel(int(sys.argv[1]))
         sys.stderr = sys.stdout
         await chx.send(f"Ready: {bot.user}")
     else:
         print(f"Ready: {bot.user}")
+    if "data" not in os.listdir():
+        os.mkdir("data")
+    if "pl.json" not in os.listdir("data"):
+        writeJSON({}, "data/pl.json")
+    if "tomorrow.json" not in os.listdir("data"):
+        writeJSON({}, "data/tomorrow.json")
+    bot.pl_dict = defaultdict(list, readJSON("data/pl.json"))
+    bot.due_tomorrow = readJSON("data/tomorrow.json")
+    bot.loop.create_task(status_task())
+    bot.loop.create_task(wipe_dms())
+    bot.loop.create_task(crawl_prairielearn())
 
 
 @bot.event
@@ -277,18 +239,6 @@ async def on_message(message):
             bot.get_cog("SM213").queue.append([message.author.id, time.time()])
 
         await bot.process_commands(message)
-
-
-if __name__ == "__main__":
-    bot.loadJSON = loadJSON
-    bot.writeJSON = writeJSON
-    bot.pl_dict = defaultdict(list)
-    bot.due_tomorrow = []
-
-    for extension in filter(lambda f: isfile(join("cogs", f)) and f != "__init__.py", os.listdir("cogs")):
-        bot.load_extension(f"cogs.{extension[:-3]}")
-        print(f"{extension} module loaded")
-
 
 @bot.event
 async def on_command_error(ctx, error):

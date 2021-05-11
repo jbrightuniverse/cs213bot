@@ -35,7 +35,7 @@ class PrairieLearn(commands.Cog):
             seenmodes = []
             for entry in entrylist:
                 skip = False
-                formatted = f"`{entry['label']}` **[{entry['name']}](https://ca.prairielearn.org/pl/course_instance/2295/assessment/{entry['id']}/)**\nCredit:\n"
+                formatted = f"`{entry['label']}` **[{entry['name']}](https://ca.prairielearn.org/pl/course_instance/2316/assessment/{entry['id']}/)**\nCredit:\n"
                 for mode in entry["modes"]:
                     if current == "current" and mode['end'] and mode['credit'] == 100:
                         offset = int(mode["end"][-1])

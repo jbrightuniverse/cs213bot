@@ -112,7 +112,7 @@ class Meta(commands.Cog):
 
         await ctx.send("done")
 
-    @commands.command()
+    @commands.command(hidden = True)
     async def topreact(self, ctx, amt = "20", start = "0"):
         """
         `!topreact` __`Returns reactions data`__
@@ -181,7 +181,7 @@ class Meta(commands.Cog):
 
 
 
-    @commands.command()
+    @commands.command(hidden = True)
     async def topusers(self, ctx, amt = "30", start = "0"):
         """
         `!topusers` __`Returns top n users`__
@@ -219,7 +219,7 @@ class Meta(commands.Cog):
             await ctx.send("Too many specified. Sorry.")
         await ctx.send(res)
 
-    @commands.command()
+    @commands.command(hidden = True)
     async def superstats(self, ctx, id = None):
         """
         `!superstats` __`Check user profile and stats`__
