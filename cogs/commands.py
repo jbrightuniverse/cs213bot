@@ -1,32 +1,17 @@
 import asyncio
-import mimetypes
 import random
 import re
 import string
-import urllib.parse
 from datetime import datetime, timedelta, timezone
 from fractions import Fraction
 from io import BytesIO
-from operator import methodcaller
 
 import discord
 import pytz
-import requests
-import requests.models
-import webcolors
 from discord.ext import commands
 from googletrans import constants, Translator
 
 from util.badargs import BadArgs
-
-# This is a huge hack but it technically works
-def _urlencode(*args, **kwargs):
-    kwargs.update(quote_via=urllib.parse.quote)
-    return urllib.parse.urlencode(*args, **kwargs)
-
-
-requests.models.urlencode = _urlencode
-
 
 # ################### COMMANDS ################### #
 
@@ -51,7 +36,7 @@ class Commands(commands.Cog):
         """
 
         # meant for 213 server
-        guild = self.bot.get_guild(838103749372674089)
+        guild = self.bot.get_guild(int(os.getenv("SERVER_ID")))
 
         if "close" in ctx.message.content.lower():
             if not ctx.channel.name.startswith("213dm-"):
@@ -87,11 +72,11 @@ class Commands(commands.Cog):
         overwrites = {
             # allow Computers and the new role, deny everyone else
             guild.default_role                : noaccess,
-            guild.get_role(838103749486051415): access,
+            guild.get_role(int(os.getenv("COMPUTER_ROLE"))): access,
             role                              : access
         }
         # this id is id of group dm category
-        channel = await guild.create_text_channel(nam, overwrites=overwrites, category=guild.get_channel(838103751175700544))
+        channel = await guild.create_text_channel(nam, overwrites=overwrites, category=guild.get_channel(int(os.getenv("DM_CATEGORY"))))
         await ctx.send("Opened channel.")
         users = (f"<@{usr.id}>" for usr in ctx.message.mentions)
         await channel.send(f"<@{ctx.author.id}> {' '.join(users)}\n" +
@@ -141,7 +126,7 @@ class Commands(commands.Cog):
             raise BadArgs("", show_help=True)
 
         # make sure that you can't add roles like "prof" or "ta"
-        valid_roles = ["notify", "He/Him/His", "She/Her/Hers", "They/Them/Theirs", "Ze/Zir/Zirs"]
+        valid_roles = ["L1A", "L1B", "L1C", "L1D", "L1E", "L1F", "L1G", "notify", "He/Him/His", "She/Her/Hers", "They/Them/Theirs", "Ze/Zir/Zirs"]
         aliases = {"he": "He/Him/His", "she": "She/Her/Hers", "ze": "Ze/Zir/Zirs", "they": "They/Them/Theirs"}
 
         # Convert alias to proper name
@@ -176,7 +161,7 @@ class Commands(commands.Cog):
         **Usage:** !leave [role name]
 
         **Examples:**
-        `!leave L2A` removes the L2A role from yourself
+        `!leave L1A` removes the L1A role from yourself
         """
 
         # case where role name is space separated

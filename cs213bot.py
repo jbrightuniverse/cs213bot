@@ -79,9 +79,16 @@ async def wipe_dms():
                 await next(i for i in guild.roles if i.name == channel.name).delete()
                 await channel.delete()
 
+def get_local_assessments():
+    names = []
+    for header in bot.pl_dict:
+        for entry in bot.pl_dict[header]:
+            names.append(f"{entry['label']} {entry['name']}")
+    return names
+
 
 async def crawl_prairielearn():
-    channel = bot.get_channel(838103749690916899)
+    channel = bot.get_channel(int(os.getenv("NOTIF_CHANNEL")))
     while True:
         try: 
             new_pl_dict = defaultdict(list)
@@ -92,6 +99,7 @@ async def crawl_prairielearn():
                 modes = []
                 not_started = False
                 for mode in schedule_data:
+                    if mode["uids"] != None: continue
                     if mode["start_date"]:
                         offset = int(mode["start_date"][-1])
                     else:
@@ -131,31 +139,42 @@ async def crawl_prairielearn():
                 }
                 new_pl_dict[assignment["assessment_set_heading"]].append(fielddata)
 
+            seen_assessments = get_local_assessments()
             sent = False
             for header in new_pl_dict:
                 for entry in new_pl_dict[header]:
                     if entry not in bot.pl_dict[header]:
                         sent = True
-                        embed = discord.Embed(color = int("%x%x%x" % colormap[entry["color"]], 16), title = "CPSC 213 on PrairieLearn: New Assessment", description = f"[**{['Assignment', 'Quiz'][entry['label'].startswith('Q')]} Unlocked: {entry['label']} {entry['name']}**](https://ca.prairielearn.org/pl/course_instance/2316/assessment/{entry['id']}/)")
+                        if f"{entry['label']} {entry['name']}" not in seen_assessments:
+                            title = f"New {['Assignment', 'Quiz'][entry['label'].startswith('Q')]}"
+                        else:
+                            title = f"{['Assignment', 'Quiz'][entry['label'].startswith('Q')]} {entry['label']} Updated,"
                         for mode in entry["modes"]:
                             if mode["credit"] == 100 and mode["end"]:
-                                embed.set_footer(text = f"Due at {mode['end']}.")
+                                title += f" Due at {mode['end']}"
                                 break
+                        else:
+                            title += f" (No Due Date)"
+
+                        embed = discord.Embed(color = int("%x%x%x" % colormap[entry["color"]], 16), title = title, description = f"[**{entry['label']} {entry['name']}**](https://ca.prairielearn.org/pl/course_instance/2316/assessment/{entry['id']}/)")
+                        embed.set_footer(text = "CPSC 213 on PrairieLearn")
                         embed.set_thumbnail(url = "https://cdn.discordapp.com/attachments/511797229913243649/803491233925169152/unknown.png")
                         await channel.send(embed = embed)
 
                     for mode in entry["modes"]:
                         if mode["credit"] == 100 and mode["end"] and (mode["end_unix"] + 60*mode["offset"]) - time.time() < 86400 and entry["label"] + " " + entry["name"] not in bot.due_tomorrow:
                             bot.due_tomorrow.append(entry["label"]+" "+entry["name"])
-                            embed = discord.Embed(color = int("%x%x%x" % colormap[entry["color"]], 16), title = "CPSC 213 on PrairieLearn: Due Date Reminder", description = f"[**{['Assignment', 'Quiz'][entry['label'].startswith('Q')]} Due in <24 Hours: {entry['label']} {entry['name']}**](https://ca.prairielearn.org/pl/course_instance/2316/assessment/{entry['id']}/)")
-                            embed.set_footer(text = f"Due at {mode['end']}.")
+                            hourcount = round(((mode["end_unix"] + 60*mode["offset"]) - time.time())/3600, 2)
+                            if hourcount < 0: continue
+                            embed = discord.Embed(color = int("%x%x%x" % colormap[entry["color"]], 16), title = f"{['Assignment', 'Quiz'][entry['label'].startswith('Q')]} {entry['label']} Due in < {hourcount} Hours\n({mode['end']})", description = f"[**{entry['label']} {entry['name']}**](https://ca.prairielearn.org/pl/course_instance/2316/assessment/{entry['id']}/)")
+                            embed.set_footer(text = "CPSC 213 on PrairieLearn")
                             embed.set_thumbnail(url = "https://cdn.discordapp.com/attachments/511797229913243649/803491233925169152/unknown.png")
                             await channel.send(embed = embed)
                             sent = True
                             break
 
             if sent:
-                await channel.send("<@&838103749372674091>")
+                await channel.send(f"<@&{os.getenv('NOTIF_ROLE')}>")
 
             bot.pl_dict = new_pl_dict
             writeJSON(dict(bot.pl_dict), "data/pl.json")

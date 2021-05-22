@@ -1,4 +1,7 @@
+import time
 import subprocess
+
+import discord
 from discord.ext import commands
 
 def can_connect(server_ip):
@@ -17,6 +20,47 @@ def can_connect(server_ip):
 class Tools(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+
+    @commands.command()
+    async def assign(self, ctx):
+        """
+        `!assign` __`Displays current PL assignments for CPSC 213`__
+
+        **Usage:** !assign
+
+        **Examples:**
+        `!assign` [embed]
+
+        """
+        embed = discord.Embed(title = f"Current Assessments on CPSC 213 PrairieLearn", description = f"Requested by {ctx.author}", color = 0x8effc1)
+        for assigntype in self.bot.pl_dict:
+            entrylist = self.bot.pl_dict[assigntype]
+            formattedentries = []
+            seenmodes = []
+            for entry in entrylist:
+                skip = False
+                formatted = f"`{entry['label']}` **[{entry['name']}](https://ca.prairielearn.org/pl/course_instance/2316/assessment/{entry['id']}/)**\nCredit:\n"
+                for mode in entry["modes"]:
+                    if mode['end'] and mode['credit'] == 100:
+                        offset = int(mode["end"][-1])
+                        now = time.time() - offset * 60
+                        if mode['end_unix'] < now:
+                            skip = True
+                            break
+
+                    fmt = f"· {mode['credit']}% until {mode['end']}\n"
+                    if fmt not in seenmodes:
+                        formatted += fmt
+                        seenmodes.append(fmt)
+
+                if skip: continue
+
+                formattedentries.append(formatted)
+            embed.add_field(name = f"\u200b\n***{assigntype.upper()}***", value = "\n".join(formattedentries), inline = False)
+        
+        embed.set_thumbnail(url = "https://cdn.discordapp.com/attachments/511797229913243649/803491233925169152/unknown.png")
+        await ctx.send(embed = embed)
+        
 
     @commands.command()
     async def checkservers(self, ctx):
