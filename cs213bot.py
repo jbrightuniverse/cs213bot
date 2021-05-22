@@ -179,6 +179,37 @@ async def crawl_prairielearn():
             bot.pl_dict = new_pl_dict
             writeJSON(dict(bot.pl_dict), "data/pl.json")
             writeJSON(bot.due_tomorrow, "data/tomorrow.json")
+            thetime = datetime.utcfromtimestamp(time.time() - (7 * 60 * 60)).strftime('%Y-%m-%d %H:%M:%S')
+            embed = discord.Embed(title = f"Current Assessments on CPSC 213 PrairieLearn", description = f"Updates every 30 minutes, last checked {thetime}", color = 0x8effc1)
+            thechannel = bot.get_channel(845733651446104134)
+            for assigntype in bot.pl_dict:
+                entrylist = bot.pl_dict[assigntype]
+                formattedentries = []
+                seenmodes = []
+                for entry in entrylist:
+                    skip = False
+                    formatted = f"`{entry['label']}` **[{entry['name']}](https://ca.prairielearn.org/pl/course_instance/2316/assessment/{entry['id']}/)**\nCredit:\n"
+                    for mode in entry["modes"]:
+                        if mode['end'] and mode['credit'] == 100:
+                            offset = int(mode["end"][-1])
+                            now = time.time() - offset * 60
+                            if mode['end_unix'] < now:
+                                skip = True
+                                break
+
+                        fmt = f"· {mode['credit']}% until {mode['end']}\n"
+                        if fmt not in seenmodes:
+                            formatted += fmt
+                            seenmodes.append(fmt)
+
+                    if skip: continue
+
+                    formattedentries.append(formatted)
+                embed.add_field(name = f"\u200b\n***{assigntype.upper()}***", value = "\n".join(formattedentries), inline = False)
+            
+            embed.set_thumbnail(url = "https://cdn.discordapp.com/attachments/511797229913243649/803491233925169152/unknown.png")
+            msg = await thechannel.fetch_message(845739504333488158)
+            await msg.edit(embed = embed)
             await asyncio.sleep(1800)
         except Exception as e:
             await channel.send(str(e))
